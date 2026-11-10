@@ -23,15 +23,23 @@ final class GetProjectAnalyticsHttpRequest extends FormRequest
         }
 
         $project = DB::table('projects')
-            ->where('id', $projectId)
-            ->whereNull('deleted_at')
-            ->first(['id', 'workspace_id', 'lead_id']);
+            ->join('workspaces', 'workspaces.id', '=', 'projects.workspace_id')
+            ->where('projects.id', $projectId)
+            ->whereNull('projects.deleted_at')
+            ->whereNull('workspaces.deleted_at')
+            ->first([
+                'projects.id',
+                'projects.workspace_id',
+                'projects.lead_id',
+                'workspaces.owner_group_id',
+                'workspaces.status',
+            ]);
 
         if (! $project) {
             abort(404, 'Project not found.');
         }
 
-        if (WorkloadAccessChecker::canManageWorkspace($user->id, (string) $project->workspace_id) || (string) $project->lead_id === (string) $user->id) {
+        if (WorkloadAccessChecker::canManageWorkspace($user->id, (string) $project->workspace_id, $project) || (string) $project->lead_id === (string) $user->id) {
             return true;
         }
 

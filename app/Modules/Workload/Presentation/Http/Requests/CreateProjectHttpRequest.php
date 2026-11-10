@@ -18,11 +18,11 @@ final class CreateProjectHttpRequest extends FormRequest
         }
 
         $workspaceId = (string) $this->input('workspace_id');
-        if ($workspaceId && WorkloadAccessChecker::canManageWorkspace($user->id, $workspaceId)) {
-            return true;
+        if ($workspaceId !== '') {
+            return WorkloadAccessChecker::canCreateProject($user->id, $workspaceId);
         }
 
-        return $user->hasPermission('projects:manage');
+        return $user->hasPermission('projects:create') || $user->hasPermission('projects:manage');
     }
 
     /**
@@ -35,7 +35,7 @@ final class CreateProjectHttpRequest extends FormRequest
             'key' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'lead_id' => ['nullable', 'uuid'],
+            'lead_id' => ['nullable', 'exists:users,id'],
             'priority_id' => ['nullable', 'uuid', 'exists:priorities,id'],
         ];
     }

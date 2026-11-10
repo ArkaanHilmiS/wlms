@@ -19,13 +19,17 @@ final class CreateProjectController
     {
         $validated = $request->validated();
 
+        $leadId = isset($validated['lead_id']) && $validated['lead_id'] !== ''
+            ? (string) $validated['lead_id']
+            : $request->getActorId();
+
         $input = new CreateProjectInput(
             projectId: $request->getIdempotencyKey(),
             workspaceId: $validated['workspace_id'],
             key: $validated['key'],
             name: $validated['name'],
             description: $validated['description'] ?? null,
-            leadId: $validated['lead_id'] ?? null,
+            leadId: $leadId,
             actorUserId: $request->getActorId(),
             priorityId: $validated['priority_id'] ?? null
         );
@@ -39,6 +43,7 @@ final class CreateProjectController
                 'key' => $output->key,
                 'name' => $output->name,
                 'status' => $output->status,
+                'lead_id' => $output->leadId !== null ? (is_numeric($output->leadId) ? (int) $output->leadId : $output->leadId) : null,
                 'priority_id' => $output->priorityId,
             ],
         ], 201);

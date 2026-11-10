@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Controllers;
 
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Application\UseCases\StartSprintUseCase;
 use App\Modules\Workload\Domain\Events\SprintStateChanged;
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\SprintModel;
@@ -21,13 +22,15 @@ final class StartSprintController
     public function __invoke(string $id, Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user || ! (
-            $user->hasRole('Workspace Owner')
-            || $user->hasRole('Workspace Admin')
-            || $user->hasRole('Superadmin')
-            || $user->hasPermission('sprints:manage')
-            || $user->hasPermission('projects:manage')
-        )) {
+        if (! $user) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $targetSprint = SprintModel::select('id', 'project_id', 'name')->find($id);
+        if ($targetSprint && ! WorkloadAccessChecker::canManageSprint($user->id, (string) $targetSprint->project_id, 'sprints:start')) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+        if (! $targetSprint && ! WorkloadAccessChecker::isSuperAdmin($user->id)) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 

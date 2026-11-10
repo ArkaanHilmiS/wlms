@@ -32,16 +32,39 @@ final class AssignWorkspaceCreatorAsOwnerListener
         // 2. Simpan role 'Workspace Owner' di user_roles jika role terdaftar
         $ownerRole = DB::table('roles')->where('name', 'Workspace Owner')->first(['id']);
         if ($ownerRole) {
-            DB::table('user_roles')->insertOrIgnore([
-                'id' => Str::uuid()->toString(),
-                'user_id' => $event->actorId,
-                'role_id' => $ownerRole->id,
-                'context_type' => 'WORKSPACE',
-                'context_id' => $event->workspaceId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $alreadyScoped = DB::table('user_roles')
+                ->where('user_id', $event->actorId)
+                ->where('role_id', $ownerRole->id)
+                ->where('context_id', $event->workspaceId)
+                ->exists();
+
+            if (! $alreadyScoped) {
+                $unscopedId = DB::table('user_roles')
+                    ->where('user_id', $event->actorId)
+                    ->where('role_id', $ownerRole->id)
+                    ->whereNull('context_id')
+                    ->value('id');
+
+                if ($unscopedId) {
+                    DB::table('user_roles')
+                        ->where('id', $unscopedId)
+                        ->update([
+                            'context_type' => 'WORKSPACE',
+                            'context_id' => $event->workspaceId,
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    DB::table('user_roles')->insertOrIgnore([
+                        'id' => Str::uuid()->toString(),
+                        'user_id' => $event->actorId,
+                        'role_id' => $ownerRole->id,
+                        'context_type' => 'WORKSPACE',
+                        'context_id' => $event->workspaceId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         }
     }
 }
-

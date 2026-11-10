@@ -6,6 +6,7 @@ namespace App\Modules\Workload\Presentation\Http\Controllers;
 
 use App\Modules\Workload\Application\DTOs\AssignIssueInput;
 use App\Modules\Workload\Application\DTOs\TransitionIssueInput;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Application\UseCases\AssignIssueUseCase;
 use App\Modules\Workload\Application\UseCases\TransitionIssueStatusUseCase;
 use App\Modules\Workload\Domain\Exceptions\InvalidTransitionException;
@@ -30,11 +31,55 @@ final class BulkUpdateIssuesController
         ]);
 
         $user = $request->user();
-        $actorId = (string) $user?->id;
+        if (! $user) {
+            abort(403, 'Unauthorized.');
+        }
+        $actorId = (string) $user->id;
 
-        if (array_key_exists('assignee_id', $validated)) {
-            if (! $user || ! ($user->hasRole('Workspace Owner') || $user->hasRole('Workspace Admin') || $user->hasRole('Superadmin') || $user->hasPermission('issues:assign'))) {
-                abort(403, 'Unauthorized. Only Workspace Owners can assign issues for now.');
+        if (! WorkloadAccessChecker::isSuperAdmin($user->id)) {
+            foreach ($validated['issue_ids'] as $issueId) {
+                $issue = DB::table('issues')
+                    ->where('id', (string) $issueId)
+                    ->whereNull('deleted_at')
+                    ->first(['project_id', 'assignee_id']);
+
+                if (! $issue || ! WorkloadAccessChecker::canViewProject($user->id, (string) $issue->project_id)) {
+                    abort(403, 'Unauthorized access to target issue project.');
+                }
+
+                $projectId = (string) $issue->project_id;
+                $workspaceId = (string) DB::table('projects')->where('id', $projectId)->value('workspace_id');
+                $canManageWs = $workspaceId !== '' && WorkloadAccessChecker::canManageWorkspace($user->id, $workspaceId);
+
+                if (! empty($validated['status_id'])) {
+                    $isAssignee = $issue->assignee_id !== null && (string) $issue->assignee_id === (string) $user->id;
+                    $canTransition = $isAssignee
+                        || $canManageWs
+                        || WorkloadAccessChecker::hasPermissionInContext(
+                            $user->id,
+                            ['issues:transition', 'issues:edit', 'issues:manage'],
+                            $workspaceId !== '' ? $workspaceId : null,
+                            $projectId
+                        );
+
+                    if (! $canTransition) {
+                        abort(403, 'Unauthorized to transition issue status.');
+                    }
+                }
+
+                if (array_key_exists('assignee_id', $validated)) {
+                    $canAssign = $canManageWs
+                        || WorkloadAccessChecker::hasPermissionInContext(
+                            $user->id,
+                            ['issues:assign', 'issues:manage'],
+                            $workspaceId !== '' ? $workspaceId : null,
+                            $projectId
+                        );
+
+                    if (! $canAssign) {
+                        abort(403, 'Unauthorized. Only Workspace Owners can assign issues for now.');
+                    }
+                }
             }
         }
 
@@ -69,4 +114,3 @@ final class BulkUpdateIssuesController
         return response()->json(['message' => 'Issues updated successfully']);
     }
 }
-

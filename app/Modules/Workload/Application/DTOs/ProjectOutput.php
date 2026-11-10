@@ -20,6 +20,7 @@ final class ProjectOutput
         public readonly ?string $description = null,
         public readonly ?string $startDate = null,
         public readonly ?string $endDate = null,
+        public readonly ?string $leadId = null,
     ) {}
 
     public static function fromDomain(Project $project): self
@@ -33,7 +34,10 @@ final class ProjectOutput
             $project->getPriorityId()?->value,
             0,
             0,
-            $project->getDescription()
+            $project->getDescription(),
+            null,
+            null,
+            $project->getLeadId(),
         );
     }
 }

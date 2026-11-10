@@ -6,7 +6,6 @@ namespace App\Modules\Workload\Presentation\Http\Requests;
 
 use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\DB;
 
 final class ArchiveProjectHttpRequest extends FormRequest
 {
@@ -18,16 +17,11 @@ final class ArchiveProjectHttpRequest extends FormRequest
         }
 
         $projectId = (string) $this->route('id');
-        if ($projectId) {
-            $project = DB::table('projects')->where('id', $projectId)->whereNull('deleted_at')->first(['workspace_id', 'lead_id']);
-            if ($project) {
-                if ((string) $project->lead_id === (string) $user->id || WorkloadAccessChecker::canManageWorkspace($user->id, (string) $project->workspace_id)) {
-                    return true;
-                }
-            }
+        if ($projectId !== '') {
+            return WorkloadAccessChecker::canDeleteProject($user->id, $projectId);
         }
 
-        return $user->hasPermission('projects:manage');
+        return $user->hasPermission('projects:manage') || $user->hasPermission('projects:delete');
     }
 
     /**

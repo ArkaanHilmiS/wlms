@@ -172,6 +172,10 @@ final class AttachmentController extends Controller
             abort(401, 'Unauthenticated.');
         }
 
+        if (! WorkloadAccessChecker::canViewProject($user->id, (string) $attachment->project_id)) {
+            abort(403, 'Unauthorized.');
+        }
+
         $isUploader = (string) $attachment->uploader_id === (string) $user->id;
         $isSuperAdmin = WorkloadAccessChecker::isSuperAdmin($user->id);
 

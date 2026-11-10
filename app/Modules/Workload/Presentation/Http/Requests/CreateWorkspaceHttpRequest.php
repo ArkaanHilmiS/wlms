@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 final class CreateWorkspaceHttpRequest extends FormRequest
@@ -20,26 +22,45 @@ final class CreateWorkspaceHttpRequest extends FormRequest
             abort(422, 'User belum terdaftar pada unit organisasi. Hubungi Administrator.');
         }
 
-        if ($user->hasPermission('workspaces:manage')) {
-            return true;
-        }
+        $hasCreatePermission = $user->hasPermission('workspaces:create') || $user->hasPermission('workspaces:manage');
 
-        // Cek apakah user memiliki role dengan permission workspaces:manage (misal Workspace Owner)
-        $user->loadMissing('userRoles.role.permissions');
-        foreach ($user->userRoles as $userRole) {
-            if ($userRole->role) {
-                if (strtolower($userRole->role->name) === 'superadmin') {
-                    return true;
-                }
-                foreach ($userRole->role->permissions as $perm) {
-                    if ($perm->name === 'workspaces:manage') {
-                        return true;
+        if (! $hasCreatePermission) {
+            $user->loadMissing('userRoles.role.permissions');
+            foreach ($user->userRoles as $userRole) {
+                if ($userRole->role) {
+                    if (strtolower($userRole->role->name) === 'superadmin') {
+                        $hasCreatePermission = true;
+                        break;
+                    }
+                    foreach ($userRole->role->permissions as $perm) {
+                        if (in_array($perm->name, ['workspaces:manage', 'workspaces:create'], true)) {
+                            $hasCreatePermission = true;
+                            break 2;
+                        }
                     }
                 }
             }
         }
 
-        return false;
+        if (! $hasCreatePermission) {
+            return false;
+        }
+
+        $requestedGroupId = $this->input('target_org_unit_id') ?? $this->input('owner_group_id');
+        if (is_string($requestedGroupId) && $requestedGroupId !== '' && $requestedGroupId !== (string) $user->org_unit_id) {
+            if (Schema::hasTable('org_units') && DB::table('org_units')->where('id', $requestedGroupId)->exists()) {
+                $isDescendant = Schema::hasTable('org_unit_closures') && DB::table('org_unit_closures')
+                    ->where('ancestor_id', (string) $user->org_unit_id)
+                    ->where('descendant_id', $requestedGroupId)
+                    ->exists();
+
+                if (! $isDescendant && ! $user->hasRole('Superadmin')) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -50,6 +71,7 @@ final class CreateWorkspaceHttpRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:500'],
+            'target_org_unit_id' => ['nullable', 'string'],
         ];
     }
 
@@ -70,12 +92,28 @@ final class CreateWorkspaceHttpRequest extends FormRequest
     }
 
     /**
-     * Mengambil ID group pemilik workspace.
-     * Dalam kasus ini, user membuat workspace untuk groupnya sendiri,
-     * yang mana datanya ada di properti user, BUKAN dari payload (mencegah IDOR).
+     * Mengambil ID group pemilik workspace:
+     * Default ke org_unit_id milik user, atau sub-divisi turunan yang valid di bawah org_unit_id user.
      */
     public function getOwnerGroupId(): string
     {
-        return (string) auth()->user()->org_unit_id;
+        $user = auth()->user();
+        $userOrgUnitId = (string) $user->org_unit_id;
+        $requestedGroupId = $this->input('target_org_unit_id') ?? $this->input('owner_group_id');
+
+        if (is_string($requestedGroupId) && $requestedGroupId !== '' && $requestedGroupId !== $userOrgUnitId) {
+            if (Schema::hasTable('org_units') && DB::table('org_units')->where('id', $requestedGroupId)->exists()) {
+                $isDescendant = Schema::hasTable('org_unit_closures') && DB::table('org_unit_closures')
+                    ->where('ancestor_id', $userOrgUnitId)
+                    ->where('descendant_id', $requestedGroupId)
+                    ->exists();
+
+                if ($isDescendant || $user->hasRole('Superadmin')) {
+                    return $requestedGroupId;
+                }
+            }
+        }
+
+        return $userOrgUnitId;
     }
 }

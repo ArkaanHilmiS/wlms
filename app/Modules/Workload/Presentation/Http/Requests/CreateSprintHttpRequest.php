@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 
@@ -12,14 +13,19 @@ final class CreateSprintHttpRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
+        if (! $user) {
+            return false;
+        }
 
-        return $user !== null && (
-            $user->hasRole('Workspace Owner')
-            || $user->hasRole('Workspace Admin')
-            || $user->hasRole('Superadmin')
+        $projectId = (string) ($this->input('project_id') ?? '');
+        if ($projectId !== '') {
+            return WorkloadAccessChecker::canManageSprint($user->id, $projectId, 'sprints:create');
+        }
+
+        return WorkloadAccessChecker::isSuperAdmin($user->id)
+            || $user->hasPermission('sprints:create')
             || $user->hasPermission('sprints:manage')
-            || $user->hasPermission('projects:manage')
-        );
+            || $user->hasPermission('projects:manage');
     }
 
     /**

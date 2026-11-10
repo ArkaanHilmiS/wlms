@@ -25,7 +25,9 @@ final class ProjectResource extends JsonResource
             'name' => $this->resource->name,
             'description' => $this->resource->description,
             'status' => $this->resource->status,
-            'lead_id' => null,
+            'lead_id' => $this->resource->leadId !== null
+                ? (is_numeric($this->resource->leadId) ? (int) $this->resource->leadId : $this->resource->leadId)
+                : null,
             'workflow_id' => null,
             'priority_id' => $this->resource->priorityId,
             'total_issues_count' => $this->resource->totalIssuesCount,

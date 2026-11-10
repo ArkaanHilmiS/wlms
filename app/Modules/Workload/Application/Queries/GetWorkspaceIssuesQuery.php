@@ -19,7 +19,16 @@ final class GetWorkspaceIssuesQuery
     public function buildQuery(string $workspaceId, array $filters = [], ?string $actorUserId = null): Builder
     {
         $query = IssueModel::with(['project', 'assignee', 'reporter', 'status', 'type', 'priority', 'sprint'])
-            ->whereHas('project', fn (Builder $q) => $q->where('workspace_id', $workspaceId));
+            ->whereHas('project', function (Builder $q) use ($workspaceId) {
+                $q->where('workspace_id', $workspaceId)
+                    ->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('workspaces')
+                            ->whereColumn('workspaces.id', 'projects.workspace_id')
+                            ->whereNull('workspaces.deleted_at')
+                            ->where('workspaces.status', 'ACTIVE');
+                    });
+            });
 
         if ($actorUserId !== null && $actorUserId !== '') {
             if (! WorkloadAccessChecker::canBypassWorkspaceFilter($actorUserId, $workspaceId)) {

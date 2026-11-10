@@ -6,6 +6,7 @@ namespace App\Modules\Workload\Presentation\Http\Requests;
 
 use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 
 final class UpdateWorkspaceHttpRequest extends FormRequest
 {
@@ -17,11 +18,15 @@ final class UpdateWorkspaceHttpRequest extends FormRequest
         }
 
         $workspaceId = (string) ($this->route('id') ?? $this->route('workspaceId') ?? '');
-        if ($workspaceId && WorkloadAccessChecker::canManageWorkspace($user->id, $workspaceId)) {
-            return true;
+        if ($workspaceId !== '') {
+            if (! DB::table('workspaces')->where('id', $workspaceId)->exists()) {
+                return WorkloadAccessChecker::isSuperAdmin($user->id) || $user->hasPermission('workspaces:manage') || $user->hasPermission('workspaces:edit');
+            }
+
+            return WorkloadAccessChecker::canManageWorkspace($user->id, $workspaceId);
         }
 
-        return $user->hasPermission('workspaces:manage');
+        return $user->hasPermission('workspaces:manage') || $user->hasPermission('workspaces:edit');
     }
 
     /**

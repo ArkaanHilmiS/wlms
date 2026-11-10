@@ -22,9 +22,16 @@ final class GlobalIssuesPageController
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
-        $workspaceId = $request->query('workspace_id');
+        if (! $user) {
+            abort(403, 'Unauthorized.');
+        }
 
-        if ((! is_string($workspaceId) || $workspaceId === '') && $user) {
+        $workspaceId = $request->query('workspace_id');
+        if (is_string($workspaceId) && $workspaceId !== '') {
+            if (! WorkloadAccessChecker::canViewWorkspace($user->id, $workspaceId)) {
+                abort(403, 'Unauthorized.');
+            }
+        } else {
             $workspaces = $this->workspacesQuery->execute(
                 (string) ($user->org_unit_id ?? ''),
                 $user->id,
@@ -33,6 +40,14 @@ final class GlobalIssuesPageController
                 WorkloadAccessChecker::isSuperAdmin($user->id)
             );
             $workspaceId = $workspaces[0]->id ?? null;
+
+            if (
+                $workspaceId === null
+                && ! WorkloadAccessChecker::isSuperAdmin($user->id)
+                && ! WorkloadAccessChecker::hasPermissionInContext($user->id, ['issues:view', 'projects:view', 'workspaces:view'])
+            ) {
+                abort(403, 'Unauthorized.');
+            }
         }
 
         $resolvedWorkspaceId = is_string($workspaceId) && $workspaceId !== '' ? $workspaceId : null;

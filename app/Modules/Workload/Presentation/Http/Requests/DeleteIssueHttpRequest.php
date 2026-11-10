@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
 use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -26,16 +27,16 @@ final class DeleteIssueHttpRequest extends FormRequest
             ? (string) DB::table('projects')->where('id', $projectId)->value('workspace_id')
             : '';
 
-        return $user->hasPermission('issues:delete')
-            || $user->hasPermission('issues:manage')
-            || ($workspaceId !== '' && (
-                $user->hasPermission('issues:delete', 'WORKSPACE', $workspaceId)
-                || $user->hasPermission('issues:manage', 'WORKSPACE', $workspaceId)
-            ))
-            || ($projectId !== '' && (
-                $user->hasPermission('issues:delete', 'PROJECT', $projectId)
-                || $user->hasPermission('issues:manage', 'PROJECT', $projectId)
-            ));
+        if ($projectId !== '' && ! WorkloadAccessChecker::canViewProject($user->id, $projectId, $workspaceId !== '' ? $workspaceId : null)) {
+            return false;
+        }
+
+        return WorkloadAccessChecker::hasPermissionInContext(
+            $user->id,
+            ['issues:delete', 'issues:manage'],
+            $workspaceId !== '' ? $workspaceId : null,
+            $projectId !== '' ? $projectId : null
+        );
     }
 
     /**
