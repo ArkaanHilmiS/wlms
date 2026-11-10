@@ -47,7 +47,11 @@ class UserRoleController extends Controller
         if (array_key_exists('context_type', $validated) && $validated['context_type'] !== null) {
             $query->where('context_type', strtoupper((string) $validated['context_type']));
             if (array_key_exists('context_id', $validated)) {
-                $query->where('context_id', $validated['context_id']);
+                if ($validated['context_id'] === null || $validated['context_id'] === '') {
+                    $query->whereNull('context_id');
+                } else {
+                    $query->where('context_id', $validated['context_id']);
+                }
             }
         }
 
