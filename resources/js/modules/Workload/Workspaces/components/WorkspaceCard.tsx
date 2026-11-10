@@ -130,14 +130,13 @@ export function WorkspaceCard({
                 <CardContent>
                     <div className="text-muted-foreground text-sm">
                         {t('Owned by Group')}:{' '}
-                        {
-                            (
-                                workspace.owner_group_id ||
-                                workspace.ownerGroupId ||
-                                ''
-                            ).split('-')[0]
-                        }
-                        ...
+                        {workspace.owner_group_name
+                            ? `${workspace.owner_group_name}${workspace.owner_group_code ? ` (${workspace.owner_group_code})` : ''}`
+                            : `${(
+                                  workspace.owner_group_id ||
+                                  workspace.ownerGroupId ||
+                                  ''
+                              ).split('-')[0]}...`}
                     </div>
                 </CardContent>
                 <CardFooter>

@@ -36,6 +36,9 @@ export function ProjectsManager({
     const { t } = useTranslate();
     const { can } = usePermission();
     const canManageProjects = canManage ?? can('projects:manage');
+    const canCreateProjects = canManageProjects || can('projects:create');
+    const canEditOwnProjects = canManageProjects || can('projects:edit');
+    const canDeleteOwnProjects = canManageProjects || can('projects:delete');
 
     const {
         data: projects = [],
@@ -144,6 +147,9 @@ export function ProjectsManager({
             <ProjectList
                 projects={projects}
                 canManageProjects={canManageProjects}
+                canCreateProjects={canCreateProjects}
+                canEditOwnProjects={canEditOwnProjects}
+                canDeleteOwnProjects={canDeleteOwnProjects}
                 priorities={priorities}
                 onCreate={handleCreateClick}
                 onEdit={handleEditClick}

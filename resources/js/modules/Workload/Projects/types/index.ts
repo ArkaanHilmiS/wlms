@@ -2,6 +2,7 @@ export interface Project {
     id: string;
     workspace_id: string;
     workflow_id?: string | null;
+    lead_id?: number | string | null;
     key: string;
     name: string;
     description: string | null;

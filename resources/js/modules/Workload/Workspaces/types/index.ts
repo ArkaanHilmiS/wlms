@@ -4,6 +4,8 @@ export interface Workspace {
     status: 'ACTIVE' | 'ARCHIVED' | string;
     owner_group_id: string;
     ownerGroupId?: string; // Fallback
+    owner_group_name?: string | null;
+    owner_group_code?: string | null;
 }
 
 export interface CreateWorkspacePayload {

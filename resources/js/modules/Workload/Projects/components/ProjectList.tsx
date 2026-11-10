@@ -12,7 +12,7 @@ import {
 import { Project } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     Card,
     CardContent,
@@ -61,6 +61,9 @@ const getProjectAvatarColor = (name: string) => {
 export function ProjectList({
     projects,
     canManageProjects,
+    canCreateProjects,
+    canEditOwnProjects,
+    canDeleteOwnProjects,
     priorities,
     onEdit,
     onDelete,
@@ -68,6 +71,9 @@ export function ProjectList({
 }: {
     projects: Project[];
     canManageProjects: boolean;
+    canCreateProjects?: boolean;
+    canEditOwnProjects?: boolean;
+    canDeleteOwnProjects?: boolean;
     priorities?: { id: string; name: string; category: string }[];
     onEdit: (project: Project) => void;
     onDelete: (project: Project) => void;
@@ -75,6 +81,36 @@ export function ProjectList({
 }) {
     const { t } = useTranslate();
     const { iconSize, updateIconSize } = useIconSize();
+    const pageProps = usePage().props as {
+        auth?: { user?: { id?: number | string } };
+    };
+    const currentUserId = pageProps.auth?.user?.id;
+
+    const allowCreate = canCreateProjects ?? canManageProjects;
+    const canEditProjectItem = (project: Project): boolean => {
+        if (canManageProjects) return true;
+        if (!canEditOwnProjects) return false;
+        return (
+            project.lead_id !== undefined &&
+            project.lead_id !== null &&
+            currentUserId !== undefined &&
+            String(project.lead_id) === String(currentUserId)
+        );
+    };
+    const canDeleteProjectItem = (project: Project): boolean => {
+        if (canManageProjects) return true;
+        if (!canDeleteOwnProjects) return false;
+        return (
+            project.lead_id !== undefined &&
+            project.lead_id !== null &&
+            currentUserId !== undefined &&
+            String(project.lead_id) === String(currentUserId)
+        );
+    };
+    const hasAnyRowAction =
+        canManageProjects ||
+        Boolean(canEditOwnProjects) ||
+        Boolean(canDeleteOwnProjects);
     const [searchQuery, setSearchQuery] = useState('');
     const [priorityFilter, setPriorityFilter] = useState('all');
 
@@ -198,7 +234,7 @@ export function ProjectList({
                         </Button>
                     </div>
 
-                    {canManageProjects && (
+                    {allowCreate && (
                         <Button onClick={onCreate} size="sm" className="h-9">
                             <Plus className="mr-2 h-4 w-4" />
                             {t('Create Project')}
@@ -319,7 +355,8 @@ export function ProjectList({
                                             </div>
                                         </div>
                                     </div>
-                                    {canManageProjects && (
+                                    {(canEditProjectItem(project) ||
+                                        canDeleteProjectItem(project)) && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
@@ -333,23 +370,31 @@ export function ProjectList({
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        onEdit(project)
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    {t('Edit')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-destructive focus:text-destructive"
-                                                    onClick={() =>
-                                                        onDelete(project)
-                                                    }
-                                                >
-                                                    <Trash className="mr-2 h-4 w-4" />
-                                                    {t('Delete')}
-                                                </DropdownMenuItem>
+                                                {canEditProjectItem(
+                                                    project,
+                                                ) && (
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            onEdit(project)
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        {t('Edit')}
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {canDeleteProjectItem(
+                                                    project,
+                                                ) && (
+                                                    <DropdownMenuItem
+                                                        className="text-destructive focus:text-destructive"
+                                                        onClick={() =>
+                                                            onDelete(project)
+                                                        }
+                                                    >
+                                                        <Trash className="mr-2 h-4 w-4" />
+                                                        {t('Delete')}
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}
@@ -431,7 +476,7 @@ export function ProjectList({
                                 <TableHead className="w-[180px]">
                                     {t('Timeline')}
                                 </TableHead>
-                                {canManageProjects && (
+                                {hasAnyRowAction && (
                                     <TableHead className="w-[70px] text-right">
                                         {t('Actions')}
                                     </TableHead>
@@ -541,41 +586,58 @@ export function ProjectList({
                                                 </span>
                                             )}
                                         </TableCell>
-                                        {canManageProjects && (
+                                        {hasAnyRowAction && (
                                             <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="ghost"
-                                                            className="h-8 w-8 p-0"
+                                                {(canEditProjectItem(project) ||
+                                                    canDeleteProjectItem(
+                                                        project,
+                                                    )) && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
                                                         >
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                onEdit(project)
-                                                            }
-                                                        >
-                                                            <Pencil className="mr-2 h-4 w-4" />
-                                                            {t('Edit')}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-destructive focus:text-destructive"
-                                                            onClick={() =>
-                                                                onDelete(
-                                                                    project,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash className="mr-2 h-4 w-4" />
-                                                            {t('Delete')}
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                            <Button
+                                                                variant="ghost"
+                                                                className="h-8 w-8 p-0"
+                                                            >
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {canEditProjectItem(
+                                                                project,
+                                                            ) && (
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        onEdit(
+                                                                            project,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                                    {t('Edit')}
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {canDeleteProjectItem(
+                                                                project,
+                                                            ) && (
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive"
+                                                                    onClick={() =>
+                                                                        onDelete(
+                                                                            project,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash className="mr-2 h-4 w-4" />
+                                                                    {t(
+                                                                        'Delete',
+                                                                    )}
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
                                             </TableCell>
                                         )}
                                     </TableRow>
