@@ -113,6 +113,45 @@ export function UserAssignRoleDialog({
     const isContextIncomplete =
         selectedScope === 'PROJECT' && !selectedProjectId;
 
+    const isRoleAlreadyAssigned = (
+        roleId: string,
+        scope?: string,
+        wsId?: string,
+        projId?: string,
+    ): boolean => {
+        const assigned = user.user_roles || [];
+        const upperScope = (scope || 'GLOBAL').toUpperCase();
+        return assigned.some((ur) => {
+            if (String(ur.role_id) !== String(roleId)) return false;
+            if (upperScope === 'GLOBAL') return true;
+            if (upperScope === 'WORKSPACE') {
+                const targetCtx = wsId || null;
+                const existingCtx =
+                    ur.context_id &&
+                    String(ur.context_id).toUpperCase() !== 'GLOBAL'
+                        ? String(ur.context_id)
+                        : null;
+                return targetCtx === existingCtx;
+            }
+            if (upperScope === 'PROJECT') {
+                return (
+                    Boolean(projId) &&
+                    String(ur.context_id || '') === String(projId)
+                );
+            }
+            return false;
+        });
+    };
+
+    const isCurrentSelectionDuplicate = selectedRole
+        ? isRoleAlreadyAssigned(
+              selectedRole,
+              selectedScope,
+              selectedWorkspaceId,
+              selectedProjectId,
+          )
+        : false;
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
@@ -140,11 +179,23 @@ export function UserAssignRoleDialog({
                             <option value="" disabled>
                                 {t('Select a role...')}
                             </option>
-                            {roles.map((role) => (
-                                <option key={role.id} value={role.id}>
-                                    {role.name} ({role.scope})
-                                </option>
-                            ))}
+                            {roles.map((role) => {
+                                const isGlobalDuplicate =
+                                    role.scope?.toUpperCase() === 'GLOBAL' &&
+                                    isRoleAlreadyAssigned(role.id, role.scope);
+                                return (
+                                    <option
+                                        key={role.id}
+                                        value={role.id}
+                                        disabled={isGlobalDuplicate}
+                                    >
+                                        {role.name} ({role.scope})
+                                        {isGlobalDuplicate
+                                            ? ` - ${t('Already assigned')}`
+                                            : ''}
+                                    </option>
+                                );
+                            })}
                         </select>
                     </div>
 
@@ -203,10 +254,21 @@ export function UserAssignRoleDialog({
                         </div>
                     )}
 
+                    {isCurrentSelectionDuplicate && (
+                        <p className="text-destructive text-xs font-medium">
+                            {t(
+                                'User sudah memiliki role ini pada scope yang dipilih.',
+                            )}
+                        </p>
+                    )}
+
                     <Button
                         type="submit"
                         disabled={
-                            isSubmitting || !selectedRole || isContextIncomplete
+                            isSubmitting ||
+                            !selectedRole ||
+                            isContextIncomplete ||
+                            isCurrentSelectionDuplicate
                         }
                         className="w-full"
                     >
