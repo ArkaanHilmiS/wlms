@@ -25,7 +25,10 @@ final class GetProjectLookupsQuery
     public function getLookupsForProject(string $workspaceId, ?string $workflowId, ?string $projectId = null): array
     {
         $issueTypes = IssueTypeModel::select('id', 'name', 'slug', 'icon', 'color')->get();
-        $priorities = PriorityModel::select('id', 'name', 'slug', 'level', 'icon', 'color')->get();
+        $priorities = PriorityModel::select('id', 'name', 'slug', 'level', 'icon', 'color')
+            ->where('is_active', true)
+            ->orderBy('level')
+            ->get();
 
         if (! $workflowId) {
             $defaultWorkflow = WorkflowModel::where('is_default', true)->first();
@@ -77,7 +80,10 @@ final class GetProjectLookupsQuery
     public function getPrioritiesOnly(): array
     {
         return [
-            'priorities' => PriorityModel::select('id', 'name', 'slug', 'level', 'icon', 'color')->get(),
+            'priorities' => PriorityModel::select('id', 'name', 'slug', 'level', 'icon', 'color')
+                ->where('is_active', true)
+                ->orderBy('level')
+                ->get(),
         ];
     }
 }

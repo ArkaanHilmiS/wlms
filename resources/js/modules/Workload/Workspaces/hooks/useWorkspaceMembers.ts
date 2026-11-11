@@ -59,6 +59,9 @@ export function useAddWorkspaceMember(workspaceId: string) {
                 queryKey: ['workspace-members', workspaceId],
             });
             queryClient.invalidateQueries({
+                queryKey: ['workspace-availability', workspaceId],
+            });
+            queryClient.invalidateQueries({
                 queryKey: ['workspace-member-candidates', workspaceId],
             });
         },
@@ -78,6 +81,9 @@ export function useRemoveWorkspaceMember(workspaceId: string) {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ['workspace-members', workspaceId],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['workspace-availability', workspaceId],
             });
             queryClient.invalidateQueries({
                 queryKey: ['workspace-member-candidates', workspaceId],
@@ -106,6 +112,9 @@ export const useUpdateWorkspaceMember = (workspaceId: string) => {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ['workspace-members', workspaceId],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['workspace-availability', workspaceId],
             });
             // Juga invalidate workload query jika ada
             queryClient.invalidateQueries({ queryKey: ['sprints'] });

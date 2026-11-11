@@ -22,6 +22,7 @@ use App\Modules\Workload\Presentation\Http\Controllers\GetProjectSprintsControll
 use App\Modules\Workload\Presentation\Http\Controllers\GetSprintWorkloadController;
 use App\Modules\Workload\Presentation\Http\Controllers\GetValidTransitionsController;
 use App\Modules\Workload\Presentation\Http\Controllers\GetWorkspaceAnalyticsController;
+use App\Modules\Workload\Presentation\Http\Controllers\GetWorkspaceAvailabilityController;
 use App\Modules\Workload\Presentation\Http\Controllers\GetWorkspaceIssuesController;
 use App\Modules\Workload\Presentation\Http\Controllers\GetWorkspacesController;
 use App\Modules\Workload\Presentation\Http\Controllers\IssueController;
@@ -55,6 +56,7 @@ Route::middleware(['auth:sanctum'])->prefix('workspaces')->group(function () {
     Route::get('/{workspaceId}/issues/export', [ExportIssuesController::class, 'exportWorkspace']);
     Route::get('/{workspaceId}/timesheets/export', [ExportTimesheetController::class, 'exportWorkspace']);
     Route::get('/{id}/analytics', GetWorkspaceAnalyticsController::class);
+    Route::get('/{id}/availability', GetWorkspaceAvailabilityController::class);
     Route::get('/{id}/settings', [WorkloadSettingsController::class, 'showWorkspace']);
     Route::put('/{id}/settings', [WorkloadSettingsController::class, 'updateWorkspace']);
 

@@ -23,7 +23,10 @@ final class GetWorkspaceLookupsQuery
             ->get();
 
         $issueTypes = IssueTypeModel::select('id', 'name', 'icon')->get();
-        $priorities = PriorityModel::select('id', 'name', 'icon', 'color')->get();
+        $priorities = PriorityModel::select('id', 'name', 'slug', 'level', 'icon', 'color')
+            ->where('is_active', true)
+            ->orderBy('level')
+            ->get();
         $statuses = StatusModel::select('id', 'name', 'category', 'slug', 'color')->get();
 
         $users = UserModel::select('users.id', 'users.name')

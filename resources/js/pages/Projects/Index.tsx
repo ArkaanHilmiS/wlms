@@ -14,14 +14,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { index as projectsIndex } from '@/routes/projects';
 import { index as workspacesIndex } from '@/routes/workspaces';
-import { Combobox } from '@/components/ui/combobox';
 import { WorkspaceMembersDialog } from '@/modules/Workload/Workspaces/components/WorkspaceMembersDialog';
-import { Users, FolderKanban, CheckSquare, BarChart2, Layers } from 'lucide-react';
+import {
+    Users,
+    FolderKanban,
+    CheckSquare,
+    BarChart2,
+    Layers,
+    Briefcase,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from '@/lib/axios';
 import { toast } from 'sonner';
 import { useTranslate } from '@/hooks/useTranslate';
 import { usePermission } from '@/hooks/usePermission';
+
+const LAST_WORKSPACE_STORAGE_KEY = 'wlms_last_workspace_id';
 
 export default function ProjectsIndex() {
     const { t } = useTranslate();
@@ -69,6 +77,44 @@ export default function ProjectsIndex() {
 
     const activeWorkspace = workspaces.find((w: any) => w.id === workspaceId);
 
+    // Halaman Proyek selalu berada di bawah satu Ruang Kerja. Tanpa workspace_id
+    // (mis. klik menu "Proyek" di sidebar), otomatis buka ruang kerja terakhir
+    // yang dipakai, atau ruang kerja pertama yang bisa diakses.
+    useEffect(() => {
+        if (workspaceId || isLoading) return;
+
+        const selectable = workspaces.filter(
+            (w: any) => w.status !== 'ARCHIVED',
+        );
+        if (selectable.length === 0) return;
+
+        let lastUsed: string | null = null;
+        try {
+            lastUsed = localStorage.getItem(LAST_WORKSPACE_STORAGE_KEY);
+        } catch {
+            lastUsed = null;
+        }
+
+        const target =
+            selectable.find((w: any) => w.id === lastUsed) ?? selectable[0];
+
+        router.visit(
+            projectsIndex({
+                query: { workspace_id: target.id, tab: activeTab },
+            }).url,
+            { replace: true, preserveState: true },
+        );
+    }, [workspaceId, isLoading, workspaces, activeTab]);
+
+    useEffect(() => {
+        if (!workspaceId) return;
+        try {
+            localStorage.setItem(LAST_WORKSPACE_STORAGE_KEY, workspaceId);
+        } catch {
+            // localStorage tidak tersedia (private mode); abaikan.
+        }
+    }, [workspaceId]);
+
     const handleToggleWorkspaceSprints = async () => {
         if (!workspaceId) return;
         const next = !enableSprints;
@@ -90,17 +136,6 @@ export default function ProjectsIndex() {
         } finally {
             setIsTogglingSprints(false);
         }
-    };
-
-    const handleWorkspaceChange = (value: string) => {
-        router.visit(
-            projectsIndex({ query: { workspace_id: value, tab: activeTab } })
-                .url,
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
     };
 
     const handleTabChange = (tab: 'overview' | 'tasks' | 'analytics') => {
@@ -129,26 +164,23 @@ export default function ProjectsIndex() {
                             {t('Projects')}
                         </h1>
                         <p className="text-muted-foreground mt-1">
-                            {t(
-                                'Manage projects and workflow within your workspace.',
+                            {activeWorkspace ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Briefcase className="h-4 w-4" />
+                                    {t('Workspace')}:{' '}
+                                    <span className="text-foreground font-medium">
+                                        {activeWorkspace.name}
+                                    </span>
+                                </span>
+                            ) : (
+                                t(
+                                    'Manage projects and workflow within your workspace.',
+                                )
                             )}
                         </p>
                     </div>
 
                     <div className="flex w-full items-center gap-3 sm:w-auto">
-                        <span className="text-muted-foreground text-sm font-medium whitespace-nowrap">
-                            Active Workspace:
-                        </span>
-                        <Combobox
-                            options={workspaces.map((ws) => ({
-                                value: ws.id,
-                                label: ws.name,
-                            }))}
-                            value={workspaceId || ''}
-                            onChange={handleWorkspaceChange}
-                            disabled={isLoading}
-                            placeholder={t('Select Workspace...')}
-                        />
                         {workspaceId &&
                             activeWorkspace &&
                             hasManagePermission && (
@@ -200,9 +232,11 @@ export default function ProjectsIndex() {
                         <CardHeader>
                             <CardTitle>{t('No Workspace Selected')}</CardTitle>
                             <CardDescription>
-                                {t(
-                                    'Please select a workspace from the dropdown above to view its projects.',
-                                )}
+                                {isLoading
+                                    ? t('Loading...')
+                                    : t(
+                                          'Open a workspace from the Workspaces page to view its projects.',
+                                      )}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>

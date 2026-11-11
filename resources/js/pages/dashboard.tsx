@@ -52,11 +52,20 @@ interface DashboardTask {
     };
 }
 
+/** Label field riwayat tiket (field_changed) agar tidak tampil sebagai "status_id". */
+const ACTIVITY_FIELD_LABELS: Record<string, string> = {
+    status_id: 'Status',
+    assignee_id: 'Assignee',
+};
+
 interface DashboardActivity {
     id: string;
     action_type: string;
     old_value: string | null;
     new_value: string | null;
+    /** Nilai yang sudah diterjemahkan ke nama (status / pengguna) oleh backend. */
+    old_label: string | null;
+    new_label: string | null;
     created_at: string;
     issue_title: string;
     issue_number: number;
@@ -96,35 +105,17 @@ export default function Dashboard() {
             <Head title={t('Dashboard')} />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
-                {/* Header */}
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            {t('Dashboard')}
-                        </h1>
-                        <p className="text-muted-foreground mt-1 text-sm">
-                            {t(
-                                'Overview of your workspace health, personal tasks, and recent activity.',
-                            )}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.visit('/issues')}
-                        >
-                            <ListTodo className="mr-1.5 h-4 w-4" />
-                            {t('My Tasks')}
-                        </Button>
-                        <Button
-                            size="sm"
-                            onClick={() => router.visit('/projects')}
-                        >
-                            <FolderKanban className="mr-1.5 h-4 w-4" />
-                            {t('Projects')}
-                        </Button>
-                    </div>
+                {/* Header. Tombol "My Tasks" & "Proyek" dihapus: keduanya sudah tersedia
+                    di panel My Assigned Tasks dan di sidebar (revisi UX). */}
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {t('Dashboard')}
+                    </h1>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        {t(
+                            'Overview of your workspace health, personal tasks, and recent activity.',
+                        )}
+                    </p>
                 </div>
 
                 {/* 4 Executive Summary Cards */}
@@ -377,15 +368,27 @@ export default function Dashboard() {
                                                 </span>
                                             </div>
                                             <p className="text-muted-foreground text-xs">
-                                                <span className="capitalize">
-                                                    {act.action_type.replace(
-                                                        /_/g,
-                                                        ' ',
-                                                    )}
+                                                <span>
+                                                    {ACTIVITY_FIELD_LABELS[
+                                                        act.action_type
+                                                    ]
+                                                        ? t(
+                                                              ACTIVITY_FIELD_LABELS[
+                                                                  act
+                                                                      .action_type
+                                                              ],
+                                                          )
+                                                        : act.action_type.replace(
+                                                              /_/g,
+                                                              ' ',
+                                                          )}
                                                 </span>
-                                                {act.new_value
-                                                    ? ` → ${act.new_value}`
-                                                    : ''}
+                                                {act.old_label &&
+                                                act.new_label
+                                                    ? `: ${act.old_label} → ${act.new_label}`
+                                                    : act.new_label
+                                                      ? ` → ${act.new_label}`
+                                                      : ''}
                                             </p>
                                             <div className="text-foreground truncate text-xs font-medium">
                                                 <span className="text-primary mr-1.5 font-mono">

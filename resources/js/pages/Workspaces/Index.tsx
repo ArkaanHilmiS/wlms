@@ -5,6 +5,7 @@ import {
     useArchiveWorkspace,
 } from '@/modules/Workload/Workspaces/hooks/useWorkspaces';
 import { WorkspaceList } from '@/modules/Workload/Workspaces/components/WorkspaceList';
+import { WorkspaceAvailabilityPanel } from '@/modules/Workload/Workspaces/components/WorkspaceAvailabilityPanel';
 import { CreateWorkspaceModal } from '@/modules/Workload/Workspaces/components/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -80,19 +81,28 @@ export default function WorkspacesIndex() {
                         )}
                     </div>
                 ) : (
-                    <WorkspaceList
-                        workspaces={workspaces}
-                        isLoading={isLoading}
-                        onSelectWorkspace={(id) =>
-                            router.visit(
-                                projectsIndex({ query: { workspace_id: id } })
-                                    .url,
-                            )
-                        }
-                        onUpdateWorkspace={handleUpdate}
-                        onArchiveWorkspace={handleArchive}
-                        canManage={hasManagePermission}
-                    />
+                    <>
+                        {/* Rekap jam tersedia tiap anggota, di atas detail ruang kerja (revisi UX). */}
+                        {!isLoading && workspaces.length > 0 && (
+                            <WorkspaceAvailabilityPanel
+                                workspaces={workspaces}
+                            />
+                        )}
+                        <WorkspaceList
+                            workspaces={workspaces}
+                            isLoading={isLoading}
+                            onSelectWorkspace={(id) =>
+                                router.visit(
+                                    projectsIndex({
+                                        query: { workspace_id: id },
+                                    }).url,
+                                )
+                            }
+                            onUpdateWorkspace={handleUpdate}
+                            onArchiveWorkspace={handleArchive}
+                            canManage={hasManagePermission}
+                        />
+                    </>
                 )}
             </div>
         </>

@@ -61,7 +61,7 @@ const getProjectAvatarColor = (name: string) => {
 
 export default function ProjectShow({ project, lookups }: ProjectShowProps) {
     const { t } = useTranslate();
-    const { iconSize, updateIconSize } = useIconSize();
+    const { iconSize } = useIconSize();
     const avatarColor = getProjectAvatarColor(project.name);
 
     const avatarSizeClass =
@@ -162,39 +162,6 @@ export default function ProjectShow({ project, lookups }: ProjectShowProps) {
                                 )}
                             </div>
                         </div>
-                    </div>
-
-                    <div className="bg-muted/60 flex items-center gap-1.5 rounded-lg border p-1">
-                        <span className="text-muted-foreground hidden px-1.5 text-[11px] font-medium sm:inline">
-                            {t('Density')}:
-                        </span>
-                        <Button
-                            variant={iconSize === 'sm' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('sm')}
-                            title={t('Small density')}
-                        >
-                            S
-                        </Button>
-                        <Button
-                            variant={iconSize === 'md' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('md')}
-                            title={t('Medium density')}
-                        >
-                            M
-                        </Button>
-                        <Button
-                            variant={iconSize === 'lg' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('lg')}
-                            title={t('Large density')}
-                        >
-                            L
-                        </Button>
                     </div>
 
                     <DropdownMenu>

@@ -3,6 +3,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import { NotificationBell } from '@/components/NotificationBell';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTranslate } from '@/hooks/useTranslate';
 import { useChangeLocale } from '@/hooks/useChangeLocale';
 
@@ -22,6 +23,7 @@ export function AppSidebarHeader({
             </div>
             <div className="flex items-center">
                 <LanguageSwitcher locale={locale} onChange={changeLocale} />
+                <ThemeToggle />
                 <NotificationBell />
             </div>
         </header>

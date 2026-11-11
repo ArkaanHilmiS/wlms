@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { BookOpen, FolderGit2 } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -119,6 +120,26 @@ export default function Login({ status, canResetPassword }: Props) {
                     {status}
                 </div>
             )}
+
+            <div className="text-muted-foreground flex items-center justify-center gap-4 text-xs">
+                <a
+                    href="https://github.com/kiloo34/wlms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+                >
+                    <FolderGit2 className="h-3.5 w-3.5" />
+                    {t('Repository')}
+                </a>
+                <span aria-hidden="true">·</span>
+                <a
+                    href="/docs"
+                    className="hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+                >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    {t('Documentation')}
+                </a>
+            </div>
         </>
     );
 }

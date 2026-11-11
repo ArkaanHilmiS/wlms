@@ -1,7 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpen,
-    FolderGit2,
     LayoutGrid,
     Briefcase,
     HelpCircle,
@@ -11,7 +9,6 @@ import {
     Settings,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { useTranslate } from '@/hooks/useTranslate';
@@ -75,28 +72,18 @@ export function AppSidebar() {
     });
 
     // 3. GABUNGKAN DENGAN MENCEGAH DUPLIKASI
-    // Pastikan menu dinamis tidak me-render ulang menu default (misal: Dashboard)
+    // Pastikan menu dinamis tidak me-render ulang menu default (misal: Dashboard).
+    // Menu Pengaturan disembunyikan dari sidebar karena sudah tersedia di menu profil (NavUser).
     const defaultHrefs = defaultNavItems.map((item) => item.href);
     const filteredDynamicNavItems = dynamicNavItems.filter(
-        (item) => !defaultHrefs.includes(item.href),
+        (item) =>
+            !defaultHrefs.includes(item.href) &&
+            !item.href.startsWith('/settings'),
     );
 
     const mainNavItems: NavItem[] = [
         ...defaultNavItems,
         ...filteredDynamicNavItems,
-    ];
-
-    const footerNavItems: NavItem[] = [
-        {
-            title: t('Repository'),
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: FolderGit2,
-        },
-        {
-            title: t('Documentation'),
-            href: '/docs',
-            icon: BookOpen,
-        },
     ];
 
     return (
@@ -119,7 +106,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

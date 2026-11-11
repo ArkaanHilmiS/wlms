@@ -41,19 +41,21 @@ class WorkloadLookupSeeder extends Seeder
 
     private function seedPriorities(): void
     {
+        // 'Lowest' dinonaktifkan (revisi UX): skala Low → Critical sudah cukup.
+        // Data lama yang masih memakai 'lowest' tetap utuh, hanya tidak muncul di pilihan.
         $priorities = [
-            ['name' => 'Lowest',   'slug' => 'lowest',   'level' => 1, 'icon' => 'chevrons-down', 'color' => '#BDC3C7'],
-            ['name' => 'Low',      'slug' => 'low',      'level' => 2, 'icon' => 'chevron-down',  'color' => '#27AE60'],
-            ['name' => 'Medium',   'slug' => 'medium',   'level' => 3, 'icon' => 'minus',         'color' => '#F39C12'],
-            ['name' => 'High',     'slug' => 'high',     'level' => 4, 'icon' => 'chevron-up',    'color' => '#E67E22'],
-            ['name' => 'Critical', 'slug' => 'critical', 'level' => 5, 'icon' => 'chevrons-up',   'color' => '#E74C3C'],
+            ['name' => 'Lowest',   'slug' => 'lowest',   'level' => 1, 'icon' => 'chevrons-down', 'color' => '#BDC3C7', 'is_active' => false],
+            ['name' => 'Low',      'slug' => 'low',      'level' => 2, 'icon' => 'chevron-down',  'color' => '#27AE60', 'is_active' => true],
+            ['name' => 'Medium',   'slug' => 'medium',   'level' => 3, 'icon' => 'minus',         'color' => '#F39C12', 'is_active' => true],
+            ['name' => 'High',     'slug' => 'high',     'level' => 4, 'icon' => 'chevron-up',    'color' => '#E67E22', 'is_active' => true],
+            ['name' => 'Critical', 'slug' => 'critical', 'level' => 5, 'icon' => 'chevrons-up',   'color' => '#E74C3C', 'is_active' => true],
         ];
 
         foreach ($priorities as $priority) {
             DB::table('priorities')->upsert(
-                array_merge($priority, ['id' => (string) Str::uuid(), 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]),
+                array_merge($priority, ['id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]),
                 ['slug'],
-                ['name', 'level', 'icon', 'color', 'updated_at']
+                ['name', 'level', 'icon', 'color', 'is_active', 'updated_at']
             );
         }
     }

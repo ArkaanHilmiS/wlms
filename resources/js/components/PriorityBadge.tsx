@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ArrowDown, ArrowRight, ArrowUp, LucideIcon } from 'lucide-react';
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface PriorityBadgeProps {
     name: string;
@@ -15,6 +16,7 @@ export function PriorityBadge({
     className,
     size = 'md',
 }: PriorityBadgeProps) {
+    const { t } = useTranslate();
     let Icon: LucideIcon = ArrowRight;
     let colorClass =
         'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700';
@@ -71,7 +73,7 @@ export function PriorityBadge({
             )}
         >
             <Icon className={iconSizes} />
-            <span>{name}</span>
+            <span>{t(name)}</span>
         </Badge>
     );
 }

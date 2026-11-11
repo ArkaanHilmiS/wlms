@@ -157,19 +157,29 @@ final class GetDashboardDataQuery
                 'users.name as actor_name',
             ]);
 
-        $recentActivities = $recentActivitiesRows->map(fn ($row): array => [
-            'id' => (string) $row->id,
-            'action_type' => (string) $row->action_type,
-            'old_value' => $row->old_value !== null ? (string) $row->old_value : null,
-            'new_value' => $row->new_value !== null ? (string) $row->new_value : null,
-            'created_at' => (string) $row->created_at,
-            'issue_title' => (string) $row->issue_title,
-            'issue_number' => (int) $row->issue_number,
-            'project_id' => (string) $row->project_id,
-            'project_key' => (string) $row->project_key,
-            'project_name' => (string) $row->project_name,
-            'actor_name' => $row->actor_name !== null ? (string) $row->actor_name : 'System',
-        ])->values()->all();
+        $valueLabels = $this->resolveActivityValueLabels($recentActivitiesRows->all());
+
+        $recentActivities = $recentActivitiesRows->map(function ($row) use ($valueLabels): array {
+            $field = (string) $row->action_type;
+            $oldValue = $row->old_value !== null ? (string) $row->old_value : null;
+            $newValue = $row->new_value !== null ? (string) $row->new_value : null;
+
+            return [
+                'id' => (string) $row->id,
+                'action_type' => $field,
+                'old_value' => $oldValue,
+                'new_value' => $newValue,
+                'old_label' => $oldValue !== null ? ($valueLabels[$field][$oldValue] ?? $oldValue) : null,
+                'new_label' => $newValue !== null ? ($valueLabels[$field][$newValue] ?? $newValue) : null,
+                'created_at' => (string) $row->created_at,
+                'issue_title' => (string) $row->issue_title,
+                'issue_number' => (int) $row->issue_number,
+                'project_id' => (string) $row->project_id,
+                'project_key' => (string) $row->project_key,
+                'project_name' => (string) $row->project_name,
+                'actor_name' => $row->actor_name !== null ? (string) $row->actor_name : 'System',
+            ];
+        })->values()->all();
 
         return [
             'stats' => [
@@ -183,5 +193,45 @@ final class GetDashboardDataQuery
             'my_tasks' => $myTasks,
             'recent_activities' => $recentActivities,
         ];
+    }
+
+    /**
+     * Riwayat tiket menyimpan ID mentah (status_id / assignee_id). Terjemahkan ke nama
+     * yang bisa dibaca agar dashboard tidak menampilkan UUID.
+     *
+     * @param  array<int, object>  $rows
+     * @return array<string, array<string, string>> field_changed => [raw value => label]
+     */
+    private function resolveActivityValueLabels(array $rows): array
+    {
+        $idsByField = [];
+        foreach ($rows as $row) {
+            $field = (string) $row->action_type;
+            foreach ([$row->old_value, $row->new_value] as $value) {
+                if ($value !== null && $value !== '') {
+                    $idsByField[$field][(string) $value] = true;
+                }
+            }
+        }
+
+        $labels = [];
+
+        if (! empty($idsByField['status_id'])) {
+            $labels['status_id'] = DB::table('statuses')
+                ->whereIn('id', array_keys($idsByField['status_id']))
+                ->pluck('name', 'id')
+                ->mapWithKeys(fn ($name, $id): array => [(string) $id => (string) $name])
+                ->all();
+        }
+
+        if (! empty($idsByField['assignee_id'])) {
+            $labels['assignee_id'] = DB::table('users')
+                ->whereIn('id', array_keys($idsByField['assignee_id']))
+                ->pluck('name', 'id')
+                ->mapWithKeys(fn ($name, $id): array => [(string) $id => (string) $name])
+                ->all();
+        }
+
+        return $labels;
     }
 }

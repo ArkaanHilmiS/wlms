@@ -80,7 +80,8 @@ export function ProjectList({
     onCreate: () => void;
 }) {
     const { t } = useTranslate();
-    const { iconSize, updateIconSize } = useIconSize();
+    // Kerapatan (S/M/L) kini hanya diatur global di Pengaturan > Tampilan.
+    const { iconSize } = useIconSize();
     const pageProps = usePage().props as {
         auth?: { user?: { id?: number | string } };
     };
@@ -147,7 +148,7 @@ export function ProjectList({
     const priorityOptions = [
         { value: 'all', label: t('All Priorities') },
         { value: 'none', label: t('No Priority') },
-        ...(priorities || []).map((p) => ({ value: p.id, label: p.name })),
+        ...(priorities || []).map((p) => ({ value: p.id, label: t(p.name) })),
     ];
 
     return (
@@ -197,40 +198,6 @@ export function ProjectList({
                             title={t('Table View')}
                         >
                             <List className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    {/* Global Icon / Card Size Selector (S, M, L) */}
-                    <div className="bg-muted/60 flex items-center gap-1.5 rounded-lg border p-1">
-                        <span className="text-muted-foreground hidden px-1 text-[11px] font-medium md:inline">
-                            {t('Density')}:
-                        </span>
-                        <Button
-                            variant={iconSize === 'sm' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('sm')}
-                            title={t('Small density')}
-                        >
-                            S
-                        </Button>
-                        <Button
-                            variant={iconSize === 'md' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('md')}
-                            title={t('Medium density')}
-                        >
-                            M
-                        </Button>
-                        <Button
-                            variant={iconSize === 'lg' ? 'default' : 'ghost'}
-                            size="sm"
-                            className="h-7 px-2.5 text-xs font-semibold"
-                            onClick={() => updateIconSize('lg')}
-                            title={t('Large density')}
-                        >
-                            L
                         </Button>
                     </div>
 
@@ -329,7 +296,7 @@ export function ProjectList({
                                             </Link>
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <CardDescription className="font-mono text-xs">
-                                                    Key: {project.key}
+                                                    {t('Key')}: {project.key}
                                                 </CardDescription>
                                                 {project.priority_id &&
                                                     priorities && (
