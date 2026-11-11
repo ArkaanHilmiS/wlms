@@ -30,6 +30,19 @@ export function useGetWorkspaceMembers(workspaceId: string) {
     });
 }
 
+export function useGetMemberCandidates(workspaceId: string, enabled: boolean) {
+    return useQuery({
+        queryKey: ['workspace-member-candidates', workspaceId],
+        queryFn: async () => {
+            const response = await axios.get<{
+                data: { id: string; name: string; email: string }[];
+            }>(`/api/workspaces/${workspaceId}/member-candidates`);
+            return response.data.data;
+        },
+        enabled: !!workspaceId && enabled,
+    });
+}
+
 export function useAddWorkspaceMember(workspaceId: string) {
     const queryClient = useQueryClient();
 
@@ -44,6 +57,9 @@ export function useAddWorkspaceMember(workspaceId: string) {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ['workspace-members', workspaceId],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['workspace-member-candidates', workspaceId],
             });
         },
     });
@@ -62,6 +78,9 @@ export function useRemoveWorkspaceMember(workspaceId: string) {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: ['workspace-members', workspaceId],
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['workspace-member-candidates', workspaceId],
             });
         },
     });

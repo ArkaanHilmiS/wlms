@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
 import {
     useGetWorkspaceMembers,
+    useGetMemberCandidates,
     useAddWorkspaceMember,
     useRemoveWorkspaceMember,
     useUpdateWorkspaceMember,
@@ -17,12 +17,6 @@ interface WorkspaceMembersDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-interface LookupUser {
-    id: string;
-    name: string;
-    email: string;
-}
-
 export function WorkspaceMembersDialog({
     workspaceId,
     workspaceName,
@@ -30,11 +24,10 @@ export function WorkspaceMembersDialog({
     onOpenChange,
 }: WorkspaceMembersDialogProps) {
     const { t } = useTranslate();
-    const { props } = usePage();
-    const lookups = (props.lookups || {}) as { users?: LookupUser[] };
-    const allUsers = lookups.users || [];
 
     const [selectedUserId, setSelectedUserId] = useState<string>('');
+
+    const { data: candidates = [] } = useGetMemberCandidates(workspaceId, open);
 
     const { data: members = [], isLoading: isLoadingMembers } =
         useGetWorkspaceMembers(workspaceId);
@@ -95,9 +88,7 @@ export function WorkspaceMembersDialog({
         }
     };
 
-    const memberIds = members.map((m) => m.id);
-    const availableUsers = allUsers.filter((u) => !memberIds.includes(u.id));
-    const userOptions = availableUsers.map((u) => ({
+    const userOptions = candidates.map((u) => ({
         value: u.id,
         label: `${u.name} (${u.email})`,
     }));
