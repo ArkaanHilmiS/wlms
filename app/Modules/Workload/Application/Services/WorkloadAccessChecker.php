@@ -6,6 +6,7 @@ namespace App\Modules\Workload\Application\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 final class WorkloadAccessChecker
 {
@@ -63,8 +64,6 @@ final class WorkloadAccessChecker
             ->whereIn('permissions.name', $expanded)
             ->where(function ($q): void {
                 $q->whereNull('user_roles.context_id')
-                    ->orWhere('user_roles.context_id', '')
-                    ->orWhereRaw("UPPER(user_roles.context_id) = 'GLOBAL'")
                     ->orWhereRaw("UPPER(COALESCE(user_roles.context_type, 'GLOBAL')) = 'GLOBAL'");
             })
             ->exists();
@@ -92,18 +91,16 @@ final class WorkloadAccessChecker
             ->whereIn('permissions.name', $expanded)
             ->where(function ($q) use ($workspaceId, $projectId): void {
                 $q->whereNull('user_roles.context_id')
-                    ->orWhere('user_roles.context_id', '')
-                    ->orWhereRaw("UPPER(user_roles.context_id) = 'GLOBAL'")
                     ->orWhereRaw("UPPER(COALESCE(user_roles.context_type, 'GLOBAL')) = 'GLOBAL'");
 
-                if ($workspaceId !== null && $workspaceId !== '') {
+                if ($workspaceId !== null && $workspaceId !== '' && Str::isUuid($workspaceId)) {
                     $q->orWhere(function ($wq) use ($workspaceId): void {
                         $wq->whereRaw("UPPER(user_roles.context_type) = 'WORKSPACE'")
                             ->where('user_roles.context_id', $workspaceId);
                     });
                 }
 
-                if ($projectId !== null && $projectId !== '') {
+                if ($projectId !== null && $projectId !== '' && Str::isUuid($projectId)) {
                     $q->orWhere(function ($pq) use ($projectId): void {
                         $pq->whereRaw("UPPER(user_roles.context_type) = 'PROJECT'")
                             ->where('user_roles.context_id', $projectId);
@@ -189,8 +186,6 @@ final class WorkloadAccessChecker
                 ->whereIn('permissions.name', ['workspaces:manage', 'workspaces:edit', 'workspaces:delete'])
                 ->where(function ($q): void {
                     $q->whereNull('user_roles.context_id')
-                        ->orWhere('user_roles.context_id', '')
-                        ->orWhereRaw("UPPER(user_roles.context_id) = 'GLOBAL'")
                         ->orWhereRaw("UPPER(COALESCE(user_roles.context_type, 'GLOBAL')) = 'GLOBAL'");
                 })
                 ->exists();
@@ -213,12 +208,21 @@ final class WorkloadAccessChecker
         }
 
         $ownerGroup = (string) ($ownerGroupId ?? '');
-        $row = DB::selectOne(
-            "SELECT
-                EXISTS(SELECT 1 FROM workspace_members JOIN users ON workspace_members.user_id = users.id WHERE workspace_members.workspace_id = ? AND workspace_members.role IN ('admin', 'owner') AND (? = '' OR users.org_unit_id = ?)) as has_member_admin,
-                EXISTS(SELECT 1 FROM user_roles WHERE UPPER(context_type) = 'WORKSPACE' AND context_id = ?) as has_scoped_role",
-            [$workspaceId, $ownerGroup, $ownerGroup, $workspaceId]
-        );
+        if ($ownerGroup !== '' && Str::isUuid($ownerGroup)) {
+            $row = DB::selectOne(
+                "SELECT
+                    EXISTS(SELECT 1 FROM workspace_members JOIN users ON workspace_members.user_id = users.id WHERE workspace_members.workspace_id = ? AND workspace_members.role IN ('admin', 'owner') AND users.org_unit_id = ?) as has_member_admin,
+                    EXISTS(SELECT 1 FROM user_roles WHERE UPPER(context_type) = 'WORKSPACE' AND context_id = ?) as has_scoped_role",
+                [$workspaceId, $ownerGroup, $workspaceId]
+            );
+        } else {
+            $row = DB::selectOne(
+                "SELECT
+                    EXISTS(SELECT 1 FROM workspace_members WHERE workspace_members.workspace_id = ? AND workspace_members.role IN ('admin', 'owner')) as has_member_admin,
+                    EXISTS(SELECT 1 FROM user_roles WHERE UPPER(context_type) = 'WORKSPACE' AND context_id = ?) as has_scoped_role",
+                [$workspaceId, $workspaceId]
+            );
+        }
 
         return ! ((bool) ($row->has_member_admin ?? false)) && ! ((bool) ($row->has_scoped_role ?? false));
     }

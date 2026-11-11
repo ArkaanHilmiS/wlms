@@ -8,6 +8,7 @@ use App\Modules\Workload\Application\DTOs\WorkspaceOutput;
 use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 final class GetWorkspacesByGroupQuery
 {
@@ -32,7 +33,7 @@ final class GetWorkspacesByGroupQuery
             $userHasAnyRole = DB::table('user_roles')->where('user_id', $userId)->exists();
 
             $accessibleGroupIds = [];
-            if (($canManageUnitWorkspaces || ! $userHasAnyRole) && ! empty($groupId)) {
+            if (($canManageUnitWorkspaces || ! $userHasAnyRole) && ! empty($groupId) && Str::isUuid($groupId)) {
                 $accessibleGroupIds = [$groupId];
                 if (Schema::hasTable('org_unit_closures')) {
                     $descendants = DB::table('org_unit_closures')
