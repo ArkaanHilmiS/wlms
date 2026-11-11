@@ -60,6 +60,7 @@ Route::middleware(['auth:sanctum'])->prefix('workspaces')->group(function () {
 
     // Workspace Members
     Route::get('/{workspace_id}/members', [WorkspaceMemberController::class, 'index']);
+    Route::get('/{workspace_id}/member-candidates', [WorkspaceMemberController::class, 'candidates']);
     Route::post('/{workspace_id}/members', [WorkspaceMemberController::class, 'store']);
     Route::put('/{workspace_id}/members/{user_id}', [WorkspaceMemberController::class, 'update']);
     Route::delete('/{workspace_id}/members/{user_id}', [WorkspaceMemberController::class, 'destroy']);

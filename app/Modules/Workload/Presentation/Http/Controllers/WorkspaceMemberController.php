@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Controllers;
 
+use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\UserModel;
 use App\Modules\Workload\Application\Queries\GetWorkspaceMembersQuery;
 use App\Modules\Workload\Application\UseCases\AddWorkspaceMemberUseCase;
 use App\Modules\Workload\Application\UseCases\RemoveWorkspaceMemberUseCase;
@@ -11,6 +12,7 @@ use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\WorkspaceMod
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 final class WorkspaceMemberController extends Controller
 {
@@ -35,6 +37,23 @@ final class WorkspaceMemberController extends Controller
         return response()->json([
             'data' => $members,
         ], 200);
+    }
+
+    // Kandidat undangan: lookups.users hanya berisi member, jadi workspace kosong tidak punya kandidat.
+    public function candidates(Request $request, string $workspaceId): JsonResponse
+    {
+        $workspace = WorkspaceModel::findOrFail($workspaceId);
+        if ($request->user()->cannot('update', $workspace)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $users = UserModel::select('id', 'name', 'email')
+            ->where('status', 'ACTIVE')
+            ->whereNotIn('id', DB::table('workspace_members')->where('workspace_id', $workspaceId)->select('user_id'))
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(['data' => $users], 200);
     }
 
     public function store(Request $request, string $workspaceId): JsonResponse
