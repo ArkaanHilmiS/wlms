@@ -12,6 +12,9 @@ export interface CreateIssuePayload {
     assignee_id?: string | null;
     original_estimate_seconds?: number | null;
     remaining_estimate_seconds?: number | null;
+    start_date?: string | null;
+    due_date?: string | null;
+    parent_id?: string | null;
 }
 
 export interface UpdateIssuePayload extends Partial<CreateIssuePayload> {
@@ -19,6 +22,9 @@ export interface UpdateIssuePayload extends Partial<CreateIssuePayload> {
     sprint_id?: string | null;
     original_estimate_seconds?: number | null;
     assignee_id?: string | null;
+    start_date?: string | null;
+    due_date?: string | null;
+    parent_id?: string | null;
 }
 
 export const useIssues = (projectId: string) => {
@@ -26,12 +32,19 @@ export const useIssues = (projectId: string) => {
     const queryKey = ['projects', projectId, 'issues'];
 
     // GET: Fetch all issues for a project
-    const { data: issues = [], isLoading, error } = useQuery<Issue[]>({
+    const {
+        data: issues = [],
+        isLoading,
+        error,
+    } = useQuery<Issue[]>({
         queryKey,
         queryFn: async () => {
-            const { data } = await axios.get(`/api/projects/${projectId}/issues`);
+            const { data } = await axios.get(
+                `/api/projects/${projectId}/issues`,
+                { params: { per_page: 500 } },
+            );
             // Handle both Laravel resource format { data: [...] } and raw array [...]
-            return data.data ? data.data : data; 
+            return data.data ? data.data : data;
         },
         enabled: !!projectId,
     });
@@ -39,7 +52,10 @@ export const useIssues = (projectId: string) => {
     // POST: Create a new issue
     const createMutation = useMutation({
         mutationFn: async (payload: CreateIssuePayload) => {
-            const { data } = await axios.post(`/api/projects/${projectId}/issues`, payload);
+            const { data } = await axios.post(
+                `/api/projects/${projectId}/issues`,
+                payload,
+            );
             return data.data ? data.data : data;
         },
         onSuccess: () => {
@@ -49,7 +65,13 @@ export const useIssues = (projectId: string) => {
 
     // PUT: Update an existing issue
     const updateMutation = useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: UpdateIssuePayload }) => {
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: UpdateIssuePayload;
+        }) => {
             const { data } = await axios.put(`/api/issues/${id}`, payload);
             return data.data ? data.data : data;
         },
@@ -71,21 +93,39 @@ export const useIssues = (projectId: string) => {
 
     // POST: Assign issue
     const assignMutation = useMutation({
-        mutationFn: async ({ id, assigneeId }: { id: string; assigneeId: string | null }) => {
-            const { data } = await axios.post(`/api/issues/${id}/assign`, { assignee_id: assigneeId });
+        mutationFn: async ({
+            id,
+            assigneeId,
+        }: {
+            id: string;
+            assigneeId: string | null;
+        }) => {
+            const { data } = await axios.post(`/api/issues/${id}/assign`, {
+                assignee_id: assigneeId,
+            });
             return data.data ? data.data : data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
             queryClient.invalidateQueries({ queryKey: ['sprints'] });
-            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'activity'] }); // Invalidate activity for audit trail
+            queryClient.invalidateQueries({
+                queryKey: ['projects', projectId, 'activity'],
+            }); // Invalidate activity for audit trail
         },
     });
 
     // POST: Transition issue status
     const transitionMutation = useMutation({
-        mutationFn: async ({ id, toStatusId }: { id: string; toStatusId: string }) => {
-            const { data } = await axios.post(`/api/issues/${id}/transition`, { to_status_id: toStatusId });
+        mutationFn: async ({
+            id,
+            toStatusId,
+        }: {
+            id: string;
+            toStatusId: string;
+        }) => {
+            const { data } = await axios.post(`/api/issues/${id}/transition`, {
+                to_status_id: toStatusId,
+            });
             return data.data ? data.data : data;
         },
         onSuccess: () => {
@@ -96,8 +136,21 @@ export const useIssues = (projectId: string) => {
 
     // POST: Log work
     const logWorkMutation = useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: { time_spent_seconds: number; description: string; started_at: string } }) => {
-            const { data } = await axios.post(`/api/issues/${id}/worklogs`, payload);
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: {
+                time_spent_seconds: number;
+                description: string;
+                started_at: string;
+            };
+        }) => {
+            const { data } = await axios.post(
+                `/api/issues/${id}/worklogs`,
+                payload,
+            );
             return data.data ? data.data : data;
         },
         onSuccess: () => {
@@ -139,7 +192,7 @@ export interface Worklog {
 
 export const useIssueWorklogs = (issueId: string | null) => {
     const queryKey = ['issues', issueId, 'worklogs'];
-    
+
     return useQuery<Worklog[]>({
         queryKey,
         queryFn: async () => {
@@ -154,16 +207,25 @@ export const useBulkUpdateIssues = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ issueIds, payload }: { issueIds: string[]; payload: Partial<UpdateIssuePayload> }) => {
-            const promises = issueIds.map(id => {
-                if ('status_id' in payload && payload.status_id) {
-                    return axios.post(`/api/issues/${id}/transition`, { to_status_id: payload.status_id });
-                } else if ('assignee_id' in payload) {
-                    return axios.post(`/api/issues/${id}/assign`, { assignee_id: payload.assignee_id === 'unassigned' ? null : payload.assignee_id });
-                }
-                return Promise.resolve();
+        mutationFn: async ({
+            issueIds,
+            payload,
+        }: {
+            issueIds: string[];
+            payload: Partial<UpdateIssuePayload>;
+        }) => {
+            await axios.post('/api/issues/bulk-update', {
+                issue_ids: issueIds,
+                ...payload,
+                ...('assignee_id' in payload
+                    ? {
+                          assignee_id:
+                              payload.assignee_id === 'unassigned'
+                                  ? null
+                                  : payload.assignee_id,
+                      }
+                    : {}),
             });
-            await Promise.all(promises);
             return true;
         },
         onSuccess: () => {

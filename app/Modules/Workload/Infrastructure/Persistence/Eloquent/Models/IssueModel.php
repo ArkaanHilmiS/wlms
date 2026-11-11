@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models;
 
 use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
@@ -28,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $reporter_id
  * @property string|null $assignee_id
  * @property array<string, mixed>|null $custom_fields
+ * @property string|null $parent_id
  * @property Carbon|null $start_date
  * @property Carbon|null $due_date
  * @property Carbon|null $created_at
@@ -44,9 +47,9 @@ final class IssueModel extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'project_id', 'sprint_id', 'status_id', 'number', 'title', 'description', 'issue_type_id', 'priority_id', 'story_points', 'original_estimate_seconds', 'remaining_estimate_seconds', 'reporter_id', 'assignee_id', 'custom_fields', 'start_date', 'due_date'];
+    protected $fillable = ['id', 'project_id', 'sprint_id', 'status_id', 'parent_id', 'number', 'title', 'description', 'issue_type_id', 'priority_id', 'story_points', 'original_estimate_seconds', 'remaining_estimate_seconds', 'reporter_id', 'assignee_id', 'custom_fields', 'start_date', 'due_date'];
 
-    protected $casts = ['number' => 'integer', 'story_points' => 'integer', 'original_estimate_seconds' => 'integer', 'custom_fields' => 'array', 'start_date' => 'date', 'due_date' => 'date'];
+    protected $casts = ['number' => 'integer', 'story_points' => 'integer', 'original_estimate_seconds' => 'integer', 'custom_fields' => 'array', 'start_date' => 'date:Y-m-d', 'due_date' => 'date:Y-m-d'];
 
     /**
      * @return BelongsTo<ProjectModel, $this>
@@ -134,5 +137,50 @@ final class IssueModel extends Model
     public function linksAsTarget(): HasMany
     {
         return $this->hasMany(IssueLinkModel::class, 'target_issue_id');
+    }
+
+    /**
+     * @return HasMany<IssueModel, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
+     * Batch subtask counts + blocked flag as subqueries (no N+1).
+     *
+     * @param  Builder<IssueModel>  $query
+     * @return Builder<IssueModel>
+     */
+    public function scopeWithLinkStats(Builder $query): Builder
+    {
+        $type = fn ($l, string $slug) => $l->whereIn('link_type_id', DB::table('issue_link_types')->select('id')->where('slug', $slug));
+        $notDone = fn ($s) => $s->where('category', '!=', 'DONE');
+
+        return $query->withCount([
+            'children as subtasks_count',
+            'children as completed_subtasks_count' => fn ($c) => $c->whereHas('status', fn ($s) => $s->where('category', 'DONE')),
+        ])->withExists([
+            'linksAsTarget as blocked_incoming' => fn ($l) => $type($l, 'blocks')->whereHas('sourceIssue.status', $notDone),
+            'linksAsSource as blocked_outgoing' => fn ($l) => $type($l, 'is-blocked-by')->whereHas('targetIssue.status', $notDone),
+        ]);
+    }
+
+    /**
+     * @return array{parent_id: string|null, subtasks_count: int, completed_subtasks_count: int, is_blocked: bool}
+     */
+    public function linkStats(): array
+    {
+        $m = array_key_exists('subtasks_count', $this->getAttributes())
+            ? $this
+            : (self::query()->withLinkStats()->whereKey($this->id)->first() ?? $this);
+
+        return [
+            'parent_id' => $this->parent_id,
+            'subtasks_count' => (int) $m->getAttribute('subtasks_count'),
+            'completed_subtasks_count' => (int) $m->getAttribute('completed_subtasks_count'),
+            'is_blocked' => (bool) ($m->getAttribute('blocked_incoming') || $m->getAttribute('blocked_outgoing')),
+        ];
     }
 }

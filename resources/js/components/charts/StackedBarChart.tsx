@@ -47,7 +47,10 @@ export function StackedBarChart({
 }: StackedBarChartProps) {
     const { iconSize } = useIconSize();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
 
     if (!data || data.length === 0 || !series || series.length === 0) {
         return (
@@ -65,8 +68,18 @@ export function StackedBarChart({
         {
             maxBarThickness: number;
             fontSize: string;
-            marginVertical: { top: number; right: number; bottom: number; left: number };
-            marginHorizontal: { top: number; right: number; bottom: number; left: number };
+            marginVertical: {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+            };
+            marginHorizontal: {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+            };
         }
     > = {
         sm: {
@@ -92,7 +105,10 @@ export function StackedBarChart({
     const config = densityConfig[iconSize];
 
     return (
-        <div className={cn('flex flex-col w-full', className)} data-slot="stacked-bar-chart">
+        <div
+            className={cn('flex w-full flex-col', className)}
+            data-slot="stacked-bar-chart"
+        >
             <ResponsiveContainer
                 height={height}
                 densityHeight={densityHeight}
@@ -104,15 +120,21 @@ export function StackedBarChart({
                         ? config.marginHorizontal
                         : config.marginVertical;
 
-                    const plotWidth = Math.max(0, width - margin.left - margin.right);
+                    const plotWidth = Math.max(
+                        0,
+                        width - margin.left - margin.right,
+                    );
                     const plotHeight = Math.max(
                         0,
-                        containerHeight - margin.top - margin.bottom
+                        containerHeight - margin.top - margin.bottom,
                     );
 
                     // Compute totals for each data point
                     const totals = data.map((item) =>
-                        series.reduce((sum, s) => sum + (Number(item[s.key]) || 0), 0)
+                        series.reduce(
+                            (sum, s) => sum + (Number(item[s.key]) || 0),
+                            0,
+                        ),
                     );
                     const maxTotalRaw = Math.max(...totals, 0);
 
@@ -123,14 +145,18 @@ export function StackedBarChart({
                         if (val <= 20) return 20;
                         if (val <= 50) return 50;
                         if (val <= 100) return 100;
-                        const factor = Math.pow(10, Math.floor(Math.log10(val)));
+                        const factor = Math.pow(
+                            10,
+                            Math.floor(Math.log10(val)),
+                        );
                         return Math.ceil(val / factor) * factor;
                     };
 
                     const maxTotal = getNiceCeiling(maxTotalRaw);
                     const tickCount = 4;
-                    const ticks = Array.from({ length: tickCount + 1 }, (_, i) =>
-                        Math.round((maxTotal / tickCount) * i)
+                    const ticks = Array.from(
+                        { length: tickCount + 1 },
+                        (_, i) => Math.round((maxTotal / tickCount) * i),
                     );
 
                     const activeItem =
@@ -142,16 +168,20 @@ export function StackedBarChart({
                         ? [
                               ...series.map((s) => ({
                                   label: s.label,
-                                  value: valueFormatter(Number(activeItem[s.key]) || 0),
+                                  value: valueFormatter(
+                                      Number(activeItem[s.key]) || 0,
+                                  ),
                                   color: s.color,
                               })),
                               {
                                   label: 'Total',
                                   value: valueFormatter(
                                       series.reduce(
-                                          (sum, s) => sum + (Number(activeItem[s.key]) || 0),
-                                          0
-                                      )
+                                          (sum, s) =>
+                                              sum +
+                                              (Number(activeItem[s.key]) || 0),
+                                          0,
+                                      ),
                                   ),
                               },
                           ]
@@ -159,7 +189,7 @@ export function StackedBarChart({
 
                     return (
                         <div
-                            className="relative w-full h-full"
+                            className="relative h-full w-full"
                             onMouseLeave={() => setHoveredIndex(null)}
                         >
                             <svg
@@ -176,31 +206,44 @@ export function StackedBarChart({
                                             ticks.map((tickVal, i) => {
                                                 const xPos =
                                                     margin.left +
-                                                    (tickVal / maxTotal) * plotWidth;
+                                                    (tickVal / maxTotal) *
+                                                        plotWidth;
                                                 return (
                                                     <g key={`xtick-${i}`}>
                                                         <line
                                                             x1={xPos}
                                                             y1={margin.top}
                                                             x2={xPos}
-                                                            y2={margin.top + plotHeight}
+                                                            y2={
+                                                                margin.top +
+                                                                plotHeight
+                                                            }
                                                             stroke="currentColor"
                                                             strokeDasharray={
-                                                                i === 0 ? undefined : '3 3'
+                                                                i === 0
+                                                                    ? undefined
+                                                                    : '3 3'
                                                             }
                                                             className={cn(
                                                                 i === 0
                                                                     ? 'text-border stroke-[1.5]'
-                                                                    : 'text-border/40 stroke-1'
+                                                                    : 'text-border/40 stroke-1',
                                                             )}
                                                         />
                                                         <text
                                                             x={xPos}
-                                                            y={margin.top + plotHeight + 14}
+                                                            y={
+                                                                margin.top +
+                                                                plotHeight +
+                                                                14
+                                                            }
                                                             textAnchor="middle"
                                                             fill="currentColor"
                                                             className="text-muted-foreground font-mono"
-                                                            style={{ fontSize: config.fontSize }}
+                                                            style={{
+                                                                fontSize:
+                                                                    config.fontSize,
+                                                            }}
                                                         >
                                                             {tickVal}
                                                         </text>
@@ -210,34 +253,42 @@ export function StackedBarChart({
 
                                         {/* Horizontal Bars */}
                                         {data.map((item, idx) => {
-                                            const slotHeight = plotHeight / data.length;
+                                            const slotHeight =
+                                                plotHeight / data.length;
                                             const barThickness = Math.min(
                                                 slotHeight * 0.7,
-                                                config.maxBarThickness
+                                                config.maxBarThickness,
                                             );
                                             const yPos =
                                                 margin.top +
                                                 idx * slotHeight +
                                                 (slotHeight - barThickness) / 2;
-                                            const isHovered = hoveredIndex === idx;
+                                            const isHovered =
+                                                hoveredIndex === idx;
 
                                             let currentX = margin.left;
 
                                             return (
                                                 <g
                                                     key={`hbar-${idx}`}
-                                                    className="transition-all duration-150 cursor-pointer"
-                                                    onClick={() => onBarClick?.(item, idx)}
+                                                    className="cursor-pointer transition-all duration-150"
+                                                    onClick={() =>
+                                                        onBarClick?.(item, idx)
+                                                    }
                                                     onMouseEnter={() => {
                                                         setHoveredIndex(idx);
                                                         setMousePos({
-                                                            x: margin.left + plotWidth * 0.5,
+                                                            x:
+                                                                margin.left +
+                                                                plotWidth * 0.5,
                                                             y: yPos,
                                                         });
                                                     }}
                                                     onMouseMove={() => {
                                                         setMousePos({
-                                                            x: margin.left + plotWidth * 0.5,
+                                                            x:
+                                                                margin.left +
+                                                                plotWidth * 0.5,
                                                             y: yPos,
                                                         });
                                                     }}
@@ -245,43 +296,66 @@ export function StackedBarChart({
                                                     {/* Y-axis Label */}
                                                     <text
                                                         x={margin.left - 8}
-                                                        y={yPos + barThickness / 2 + 3.5}
+                                                        y={
+                                                            yPos +
+                                                            barThickness / 2 +
+                                                            3.5
+                                                        }
                                                         textAnchor="end"
                                                         fill="currentColor"
                                                         className={cn(
-                                                            'font-medium truncate transition-colors',
+                                                            'truncate font-medium transition-colors',
                                                             isHovered
                                                                 ? 'text-foreground font-semibold'
-                                                                : 'text-muted-foreground'
+                                                                : 'text-muted-foreground',
                                                         )}
-                                                        style={{ fontSize: config.fontSize }}
+                                                        style={{
+                                                            fontSize:
+                                                                config.fontSize,
+                                                        }}
                                                     >
-                                                        {String(item[xKey] ?? '')}
+                                                        {String(
+                                                            item[xKey] ?? '',
+                                                        )}
                                                     </text>
 
                                                     {/* Stacked segments */}
                                                     {series.map((s, sIdx) => {
-                                                        const val = Number(item[s.key]) || 0;
+                                                        const val =
+                                                            Number(
+                                                                item[s.key],
+                                                            ) || 0;
                                                         const segWidth =
                                                             maxTotal > 0
-                                                                ? (val / maxTotal) * plotWidth
+                                                                ? (val /
+                                                                      maxTotal) *
+                                                                  plotWidth
                                                                 : 0;
                                                         const segX = currentX;
                                                         currentX += segWidth;
 
-                                                        if (segWidth <= 0) return null;
+                                                        if (segWidth <= 0)
+                                                            return null;
 
                                                         const isLast =
-                                                            sIdx === series.length - 1 ||
+                                                            sIdx ===
+                                                                series.length -
+                                                                    1 ||
                                                             series
                                                                 .slice(sIdx + 1)
                                                                 .every(
                                                                     (nextS) =>
                                                                         (Number(
-                                                                            item[nextS.key]
-                                                                        ) || 0) <= 0
+                                                                            item[
+                                                                                nextS
+                                                                                    .key
+                                                                            ],
+                                                                        ) ||
+                                                                            0) <=
+                                                                        0,
                                                                 );
-                                                        const isFirst = sIdx === 0;
+                                                        const isFirst =
+                                                            sIdx === 0;
 
                                                         return (
                                                             <rect
@@ -289,14 +363,20 @@ export function StackedBarChart({
                                                                 x={segX}
                                                                 y={yPos}
                                                                 width={segWidth}
-                                                                height={barThickness}
-                                                                rx={isLast ? 3 : 0}
+                                                                height={
+                                                                    barThickness
+                                                                }
+                                                                rx={
+                                                                    isLast
+                                                                        ? 3
+                                                                        : 0
+                                                                }
                                                                 fill={s.color}
                                                                 className={cn(
                                                                     'transition-opacity',
                                                                     isHovered
                                                                         ? 'opacity-100 brightness-105'
-                                                                        : 'opacity-90'
+                                                                        : 'opacity-90',
                                                                 )}
                                                             />
                                                         );
@@ -314,22 +394,28 @@ export function StackedBarChart({
                                                 const yPos =
                                                     margin.top +
                                                     plotHeight -
-                                                    (tickVal / maxTotal) * plotHeight;
+                                                    (tickVal / maxTotal) *
+                                                        plotHeight;
                                                 return (
                                                     <g key={`ytick-${i}`}>
                                                         <line
                                                             x1={margin.left}
                                                             y1={yPos}
-                                                            x2={margin.left + plotWidth}
+                                                            x2={
+                                                                margin.left +
+                                                                plotWidth
+                                                            }
                                                             y2={yPos}
                                                             stroke="currentColor"
                                                             strokeDasharray={
-                                                                i === 0 ? undefined : '3 3'
+                                                                i === 0
+                                                                    ? undefined
+                                                                    : '3 3'
                                                             }
                                                             className={cn(
                                                                 i === 0
                                                                     ? 'text-border stroke-[1.5]'
-                                                                    : 'text-border/40 stroke-1'
+                                                                    : 'text-border/40 stroke-1',
                                                             )}
                                                         />
                                                         <text
@@ -338,7 +424,10 @@ export function StackedBarChart({
                                                             textAnchor="end"
                                                             fill="currentColor"
                                                             className="text-muted-foreground font-mono"
-                                                            style={{ fontSize: config.fontSize }}
+                                                            style={{
+                                                                fontSize:
+                                                                    config.fontSize,
+                                                            }}
                                                         >
                                                             {tickVal}
                                                         </text>
@@ -348,34 +437,45 @@ export function StackedBarChart({
 
                                         {/* Vertical Stacked Bars */}
                                         {data.map((item, idx) => {
-                                            const slotWidth = plotWidth / data.length;
+                                            const slotWidth =
+                                                plotWidth / data.length;
                                             const barThickness = Math.min(
                                                 slotWidth * 0.65,
-                                                config.maxBarThickness
+                                                config.maxBarThickness,
                                             );
                                             const xPos =
                                                 margin.left +
                                                 idx * slotWidth +
                                                 (slotWidth - barThickness) / 2;
-                                            const isHovered = hoveredIndex === idx;
+                                            const isHovered =
+                                                hoveredIndex === idx;
 
-                                            let currentY = margin.top + plotHeight;
+                                            let currentY =
+                                                margin.top + plotHeight;
 
                                             return (
                                                 <g
                                                     key={`vbar-${idx}`}
-                                                    className="transition-all duration-150 cursor-pointer"
-                                                    onClick={() => onBarClick?.(item, idx)}
+                                                    className="cursor-pointer transition-all duration-150"
+                                                    onClick={() =>
+                                                        onBarClick?.(item, idx)
+                                                    }
                                                     onMouseEnter={() => {
                                                         setHoveredIndex(idx);
                                                         setMousePos({
-                                                            x: xPos + barThickness / 2,
+                                                            x:
+                                                                xPos +
+                                                                barThickness /
+                                                                    2,
                                                             y: margin.top + 10,
                                                         });
                                                     }}
                                                     onMouseMove={() => {
                                                         setMousePos({
-                                                            x: xPos + barThickness / 2,
+                                                            x:
+                                                                xPos +
+                                                                barThickness /
+                                                                    2,
                                                             y: margin.top + 10,
                                                         });
                                                     }}
@@ -383,7 +483,10 @@ export function StackedBarChart({
                                                     {/* Hover column highlight */}
                                                     {isHovered && (
                                                         <rect
-                                                            x={margin.left + idx * slotWidth}
+                                                            x={
+                                                                margin.left +
+                                                                idx * slotWidth
+                                                            }
                                                             y={margin.top}
                                                             width={slotWidth}
                                                             height={plotHeight}
@@ -394,25 +497,38 @@ export function StackedBarChart({
 
                                                     {/* Stacked segments (rendered bottom to top) */}
                                                     {series.map((s, sIdx) => {
-                                                        const val = Number(item[s.key]) || 0;
+                                                        const val =
+                                                            Number(
+                                                                item[s.key],
+                                                            ) || 0;
                                                         const segHeight =
                                                             maxTotal > 0
-                                                                ? (val / maxTotal) * plotHeight
+                                                                ? (val /
+                                                                      maxTotal) *
+                                                                  plotHeight
                                                                 : 0;
                                                         currentY -= segHeight;
                                                         const segY = currentY;
 
-                                                        if (segHeight <= 0) return null;
+                                                        if (segHeight <= 0)
+                                                            return null;
 
                                                         const isTop =
-                                                            sIdx === series.length - 1 ||
+                                                            sIdx ===
+                                                                series.length -
+                                                                    1 ||
                                                             series
                                                                 .slice(sIdx + 1)
                                                                 .every(
                                                                     (nextS) =>
                                                                         (Number(
-                                                                            item[nextS.key]
-                                                                        ) || 0) <= 0
+                                                                            item[
+                                                                                nextS
+                                                                                    .key
+                                                                            ],
+                                                                        ) ||
+                                                                            0) <=
+                                                                        0,
                                                                 );
 
                                                         return (
@@ -420,15 +536,23 @@ export function StackedBarChart({
                                                                 key={`vseg-${s.key}-${sIdx}`}
                                                                 x={xPos}
                                                                 y={segY}
-                                                                width={barThickness}
-                                                                height={segHeight}
-                                                                rx={isTop ? 3 : 0}
+                                                                width={
+                                                                    barThickness
+                                                                }
+                                                                height={
+                                                                    segHeight
+                                                                }
+                                                                rx={
+                                                                    isTop
+                                                                        ? 3
+                                                                        : 0
+                                                                }
                                                                 fill={s.color}
                                                                 className={cn(
                                                                     'transition-opacity',
                                                                     isHovered
                                                                         ? 'opacity-100 brightness-105'
-                                                                        : 'opacity-90'
+                                                                        : 'opacity-90',
                                                                 )}
                                                             />
                                                         );
@@ -436,19 +560,31 @@ export function StackedBarChart({
 
                                                     {/* X-axis Label */}
                                                     <text
-                                                        x={xPos + barThickness / 2}
-                                                        y={margin.top + plotHeight + 16}
+                                                        x={
+                                                            xPos +
+                                                            barThickness / 2
+                                                        }
+                                                        y={
+                                                            margin.top +
+                                                            plotHeight +
+                                                            16
+                                                        }
                                                         textAnchor="middle"
                                                         fill="currentColor"
                                                         className={cn(
-                                                            'font-medium truncate transition-colors',
+                                                            'truncate font-medium transition-colors',
                                                             isHovered
                                                                 ? 'text-foreground font-semibold'
-                                                                : 'text-muted-foreground'
+                                                                : 'text-muted-foreground',
                                                         )}
-                                                        style={{ fontSize: config.fontSize }}
+                                                        style={{
+                                                            fontSize:
+                                                                config.fontSize,
+                                                        }}
                                                     >
-                                                        {String(item[xKey] ?? '')}
+                                                        {String(
+                                                            item[xKey] ?? '',
+                                                        )}
                                                     </text>
                                                 </g>
                                             );
@@ -463,7 +599,11 @@ export function StackedBarChart({
                                     active={hoveredIndex !== null}
                                     x={mousePos.x}
                                     y={mousePos.y}
-                                    title={activeItem ? String(activeItem[xKey]) : undefined}
+                                    title={
+                                        activeItem
+                                            ? String(activeItem[xKey])
+                                            : undefined
+                                    }
                                     items={tooltipItems}
                                     containerWidth={width}
                                     containerHeight={containerHeight}

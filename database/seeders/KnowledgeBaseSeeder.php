@@ -21,7 +21,7 @@ class KnowledgeBaseSeeder extends Seeder
             'order' => 1,
         ]);
 
-        $filePath = base_path('docs/UserGuide-IssueManagement.md');
+        $filePath = base_path('doc/UserGuide-IssueManagement.md');
         $raw = file_exists($filePath) ? file_get_contents($filePath) : false;
         $content = $raw !== false ? Str::markdown($raw) : 'Content not found.';
 

@@ -77,16 +77,19 @@ export function ChartLegend({
         <div
             role="list"
             className={cn(
-                'flex flex-wrap items-center select-none pt-2',
+                'flex flex-wrap items-center pt-2 select-none',
                 direction === 'col' ? 'flex-col items-start' : 'flex-row',
                 alignClass,
                 currentDensity.container,
-                className
+                className,
             )}
             data-slot="chart-legend"
         >
             {items.map((item, idx) => {
-                const isActive = activeItemIndex === undefined || activeItemIndex === null || activeItemIndex === idx;
+                const isActive =
+                    activeItemIndex === undefined ||
+                    activeItemIndex === null ||
+                    activeItemIndex === idx;
                 const isClickable = typeof onItemClick === 'function';
 
                 return (
@@ -98,18 +101,21 @@ export function ChartLegend({
                             'inline-flex items-center transition-all duration-150',
                             currentDensity.item,
                             isClickable && 'cursor-pointer hover:opacity-100',
-                            !isActive && 'opacity-40 grayscale-[50%]'
+                            !isActive && 'opacity-40 grayscale-[50%]',
                         )}
                     >
                         <span
-                            className={cn('rounded-full shrink-0 shadow-xs', currentDensity.dot)}
+                            className={cn(
+                                'shrink-0 rounded-full shadow-xs',
+                                currentDensity.dot,
+                            )}
                             style={{ backgroundColor: item.color }}
                             aria-hidden="true"
                         />
                         <span
                             className={cn(
-                                'text-muted-foreground font-medium truncate hover:text-foreground transition-colors',
-                                currentDensity.text
+                                'text-muted-foreground hover:text-foreground truncate font-medium transition-colors',
+                                currentDensity.text,
                             )}
                         >
                             {item.label}
@@ -117,8 +123,8 @@ export function ChartLegend({
                         {item.value !== undefined && (
                             <span
                                 className={cn(
-                                    'text-foreground font-semibold tabular-nums ml-0.5',
-                                    currentDensity.value
+                                    'text-foreground ml-0.5 font-semibold tabular-nums',
+                                    currentDensity.value,
                                 )}
                             >
                                 {item.value}

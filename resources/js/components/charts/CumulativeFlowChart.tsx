@@ -49,7 +49,10 @@ export function CumulativeFlowChart({
 }: CumulativeFlowChartProps) {
     const { iconSize } = useIconSize();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
 
     if (!data || data.length === 0) {
         return (
@@ -66,7 +69,12 @@ export function CumulativeFlowChart({
         IconSize,
         {
             fontSize: string;
-            margin: { top: number; right: number; bottom: number; left: number };
+            margin: {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+            };
             dotRadius: number;
         }
     > = {
@@ -90,7 +98,10 @@ export function CumulativeFlowChart({
     const config = densityConfig[iconSize];
 
     return (
-        <div className={cn('flex flex-col w-full', className)} data-slot="cumulative-flow-chart">
+        <div
+            className={cn('flex w-full flex-col', className)}
+            data-slot="cumulative-flow-chart"
+        >
             <ResponsiveContainer
                 height={height}
                 densityHeight={densityHeight}
@@ -99,11 +110,13 @@ export function CumulativeFlowChart({
                 {({ width, height: containerHeight }) => {
                     const plotWidth = Math.max(
                         0,
-                        width - config.margin.left - config.margin.right
+                        width - config.margin.left - config.margin.right,
                     );
                     const plotHeight = Math.max(
                         0,
-                        containerHeight - config.margin.top - config.margin.bottom
+                        containerHeight -
+                            config.margin.top -
+                            config.margin.bottom,
                     );
 
                     const N = data.length;
@@ -114,7 +127,10 @@ export function CumulativeFlowChart({
                         const cumulative = [0];
                         let runningTotal = 0;
                         for (const s of series) {
-                            runningTotal += Math.max(0, Number(item[s.key]) || 0);
+                            runningTotal += Math.max(
+                                0,
+                                Number(item[s.key]) || 0,
+                            );
                             cumulative.push(runningTotal);
                         }
                         return cumulative;
@@ -122,7 +138,7 @@ export function CumulativeFlowChart({
 
                     const maxTotalRaw = Math.max(
                         ...stacks.map((stack) => stack[stack.length - 1]),
-                        0
+                        0,
                     );
 
                     const getNiceCeiling = (val: number) => {
@@ -132,14 +148,18 @@ export function CumulativeFlowChart({
                         if (val <= 20) return 20;
                         if (val <= 50) return 50;
                         if (val <= 100) return 100;
-                        const factor = Math.pow(10, Math.floor(Math.log10(val)));
+                        const factor = Math.pow(
+                            10,
+                            Math.floor(Math.log10(val)),
+                        );
                         return Math.ceil(val / factor) * factor;
                     };
 
                     const maxTotal = getNiceCeiling(maxTotalRaw);
                     const tickCount = 4;
-                    const yTicks = Array.from({ length: tickCount + 1 }, (_, i) =>
-                        Math.round((maxTotal / tickCount) * i)
+                    const yTicks = Array.from(
+                        { length: tickCount + 1 },
+                        (_, i) => Math.round((maxTotal / tickCount) * i),
                     );
 
                     const getX = (idx: number) => {
@@ -148,7 +168,8 @@ export function CumulativeFlowChart({
                     };
 
                     const getY = (val: number) => {
-                        if (maxTotal <= 0) return config.margin.top + plotHeight;
+                        if (maxTotal <= 0)
+                            return config.margin.top + plotHeight;
                         return (
                             config.margin.top +
                             plotHeight -
@@ -190,13 +211,15 @@ export function CumulativeFlowChart({
                         ? [
                               ...[...series].reverse().map((s) => ({
                                   label: s.label,
-                                  value: valueFormatter(Number(activeItem[s.key]) || 0),
+                                  value: valueFormatter(
+                                      Number(activeItem[s.key]) || 0,
+                                  ),
                                   color: s.color,
                               })),
                               {
                                   label: 'Total',
                                   value: valueFormatter(
-                                      stacks[hoveredIndex!][series.length]
+                                      stacks[hoveredIndex!][series.length],
                                   ),
                               },
                           ]
@@ -204,14 +227,18 @@ export function CumulativeFlowChart({
 
                     return (
                         <div
-                            className="relative w-full h-full"
+                            className="relative h-full w-full"
                             onMouseLeave={() => setHoveredIndex(null)}
                             onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
+                                const rect =
+                                    e.currentTarget.getBoundingClientRect();
                                 const mouseX = e.clientX - rect.left;
                                 const clampedX = Math.max(
                                     config.margin.left,
-                                    Math.min(config.margin.left + plotWidth, mouseX)
+                                    Math.min(
+                                        config.margin.left + plotWidth,
+                                        mouseX,
+                                    ),
                                 );
                                 const relX = clampedX - config.margin.left;
                                 const index =
@@ -221,8 +248,11 @@ export function CumulativeFlowChart({
                                               N - 1,
                                               Math.max(
                                                   0,
-                                                  Math.round((relX / plotWidth) * (N - 1))
-                                              )
+                                                  Math.round(
+                                                      (relX / plotWidth) *
+                                                          (N - 1),
+                                                  ),
+                                              ),
                                           );
                                 setHoveredIndex(index);
                                 setMousePos({
@@ -246,14 +276,21 @@ export function CumulativeFlowChart({
                                                 <line
                                                     x1={config.margin.left}
                                                     y1={yPos}
-                                                    x2={config.margin.left + plotWidth}
+                                                    x2={
+                                                        config.margin.left +
+                                                        plotWidth
+                                                    }
                                                     y2={yPos}
                                                     stroke="currentColor"
-                                                    strokeDasharray={i === 0 ? undefined : '3 3'}
+                                                    strokeDasharray={
+                                                        i === 0
+                                                            ? undefined
+                                                            : '3 3'
+                                                    }
                                                     className={cn(
                                                         i === 0
                                                             ? 'text-border stroke-[1.5]'
-                                                            : 'text-border/40 stroke-1'
+                                                            : 'text-border/40 stroke-1',
                                                     )}
                                                 />
                                                 <text
@@ -262,7 +299,10 @@ export function CumulativeFlowChart({
                                                     textAnchor="end"
                                                     fill="currentColor"
                                                     className="text-muted-foreground font-mono"
-                                                    style={{ fontSize: config.fontSize }}
+                                                    style={{
+                                                        fontSize:
+                                                            config.fontSize,
+                                                    }}
                                                 >
                                                     {tickVal}
                                                 </text>
@@ -271,29 +311,36 @@ export function CumulativeFlowChart({
                                     })}
 
                                 {/* Stacked Areas */}
-                                {areaPaths.map(({ series: s, path, topStroke }, idx) => (
-                                    <g key={`cfd-band-${s.key}-${idx}`}>
-                                        <path
-                                            d={path}
-                                            fill={s.color}
-                                            className="opacity-75 transition-opacity duration-150 hover:opacity-90"
-                                        />
-                                        <path
-                                            d={topStroke}
-                                            fill="none"
-                                            stroke={s.color}
-                                            strokeWidth={1.5}
-                                            className="opacity-95"
-                                        />
-                                    </g>
-                                ))}
+                                {areaPaths.map(
+                                    ({ series: s, path, topStroke }, idx) => (
+                                        <g key={`cfd-band-${s.key}-${idx}`}>
+                                            <path
+                                                d={path}
+                                                fill={s.color}
+                                                className="opacity-75 transition-opacity duration-150 hover:opacity-90"
+                                            />
+                                            <path
+                                                d={topStroke}
+                                                fill="none"
+                                                stroke={s.color}
+                                                strokeWidth={1.5}
+                                                className="opacity-95"
+                                            />
+                                        </g>
+                                    ),
+                                )}
 
                                 {/* X-axis Ticks / Labels */}
                                 {data.map((item, idx) => {
                                     // Skip intermediate labels if too dense
                                     const skipFactor =
-                                        N > 12 ? Math.ceil(N / 6) : N > 6 ? 2 : 1;
-                                    if (idx % skipFactor !== 0 && idx !== N - 1) return null;
+                                        N > 12
+                                            ? Math.ceil(N / 6)
+                                            : N > 6
+                                              ? 2
+                                              : 1;
+                                    if (idx % skipFactor !== 0 && idx !== N - 1)
+                                        return null;
 
                                     const xPos = getX(idx);
                                     const rawDate = String(item[xKey] ?? '');
@@ -307,19 +354,32 @@ export function CumulativeFlowChart({
                                         <g key={`cfd-xlabel-${idx}`}>
                                             <line
                                                 x1={xPos}
-                                                y1={config.margin.top + plotHeight}
+                                                y1={
+                                                    config.margin.top +
+                                                    plotHeight
+                                                }
                                                 x2={xPos}
-                                                y2={config.margin.top + plotHeight + 4}
+                                                y2={
+                                                    config.margin.top +
+                                                    plotHeight +
+                                                    4
+                                                }
                                                 stroke="currentColor"
                                                 className="text-border"
                                             />
                                             <text
                                                 x={xPos}
-                                                y={config.margin.top + plotHeight + 16}
+                                                y={
+                                                    config.margin.top +
+                                                    plotHeight +
+                                                    16
+                                                }
                                                 textAnchor="middle"
                                                 fill="currentColor"
                                                 className="text-muted-foreground font-medium"
-                                                style={{ fontSize: config.fontSize }}
+                                                style={{
+                                                    fontSize: config.fontSize,
+                                                }}
                                             >
                                                 {displayDate}
                                             </text>
@@ -342,7 +402,7 @@ export function CumulativeFlowChart({
                                         />
                                         {series.map((s, sIdx) => {
                                             const pointY = getY(
-                                                stacks[hoveredIndex][sIdx + 1]
+                                                stacks[hoveredIndex][sIdx + 1],
                                             );
                                             return (
                                                 <circle
@@ -367,7 +427,11 @@ export function CumulativeFlowChart({
                                     active={hoveredIndex !== null}
                                     x={mousePos.x}
                                     y={mousePos.y}
-                                    title={activeItem ? String(activeItem[xKey]) : undefined}
+                                    title={
+                                        activeItem
+                                            ? String(activeItem[xKey])
+                                            : undefined
+                                    }
                                     items={tooltipItems}
                                     containerWidth={width}
                                     containerHeight={containerHeight}

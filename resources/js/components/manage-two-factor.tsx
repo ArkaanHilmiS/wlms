@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 
 export type Props = {
     canManageTwoFactor?: boolean;
@@ -50,20 +56,21 @@ export default function ManageTwoFactor(props: Props) {
             <CardHeader className="pb-6">
                 <CardTitle>Two-factor Authentication</CardTitle>
                 <CardDescription>
-                    Manage your two-factor authentication settings to add an extra layer of security.
+                    Manage your two-factor authentication settings to add an
+                    extra layer of security.
                 </CardDescription>
             </CardHeader>
 
-            <CardContent >
+            <CardContent>
                 {twoFactorEnabled ? (
-                    <div className="flex flex-col items-start justify-start space-y-4 max-w-xl">
+                    <div className="flex max-w-xl flex-col items-start justify-start space-y-4">
                         <p className="text-muted-foreground text-sm">
                             You will be prompted for a secure, random pin during
-                            login, which you can retrieve from the TOTP-supported
-                            application on your phone.
+                            login, which you can retrieve from the
+                            TOTP-supported application on your phone.
                         </p>
 
-                        <div className="relative inline mt-2">
+                        <div className="relative mt-2 inline">
                             <Form {...disable.form()}>
                                 {({ processing }) => (
                                     <Button
@@ -86,17 +93,17 @@ export default function ManageTwoFactor(props: Props) {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-start justify-start space-y-4 max-w-xl">
+                    <div className="flex max-w-xl flex-col items-start justify-start space-y-4">
                         <p className="text-muted-foreground text-sm">
-                            When you enable two-factor authentication, you will be
-                            prompted for a secure pin during login. This pin can be
-                            retrieved from a TOTP-supported application on your
-                            phone.
+                            When you enable two-factor authentication, you will
+                            be prompted for a secure pin during login. This pin
+                            can be retrieved from a TOTP-supported application
+                            on your phone.
                         </p>
 
                         <div className="mt-2">
                             {hasSetupData ? (
-                                <Button onClick={() => setShowSetupModal(true)} >
+                                <Button onClick={() => setShowSetupModal(true)}>
                                     <ShieldCheck className="mr-2 h-4 w-4" />
                                     Continue setup
                                 </Button>
@@ -106,7 +113,10 @@ export default function ManageTwoFactor(props: Props) {
                                     onSuccess={() => setShowSetupModal(true)}
                                 >
                                     {({ processing }) => (
-                                        <Button type="submit" disabled={processing} >
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
                                             Enable 2FA
                                         </Button>
                                     )}

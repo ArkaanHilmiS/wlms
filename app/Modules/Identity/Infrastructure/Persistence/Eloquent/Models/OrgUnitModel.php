@@ -31,10 +31,12 @@ class OrgUnitModel extends Model
         'name',
         'code',
         'is_active',
+        'max_workspaces',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'max_workspaces' => 'integer',
     ];
 
     /**

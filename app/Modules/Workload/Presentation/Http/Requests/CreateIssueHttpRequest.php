@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
 use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final class CreateIssueHttpRequest extends FormRequest
@@ -14,8 +16,25 @@ final class CreateIssueHttpRequest extends FormRequest
     {
         /** @var UserModel|null $user */
         $user = $this->user();
+        if (! $user) {
+            return false;
+        }
 
-        return $user && $user->hasPermission('issues:manage');
+        $projectId = (string) ($this->route('project_id') ?? $this->input('project_id') ?? '');
+        $workspaceId = $projectId !== ''
+            ? (string) DB::table('projects')->where('id', $projectId)->value('workspace_id')
+            : '';
+
+        if ($projectId !== '' && ! WorkloadAccessChecker::canViewProject($user->id, $projectId, $workspaceId !== '' ? $workspaceId : null)) {
+            return false;
+        }
+
+        return WorkloadAccessChecker::hasPermissionInContext(
+            $user->id,
+            ['issues:create', 'issues:manage'],
+            $workspaceId !== '' ? $workspaceId : null,
+            $projectId !== '' ? $projectId : null
+        );
     }
 
     /**
@@ -30,7 +49,11 @@ final class CreateIssueHttpRequest extends FormRequest
             'issue_type_id' => ['required', 'uuid'],
             'priority_id' => ['required', 'uuid'],
             'sprint_id' => ['nullable', 'uuid'],
+            'assignee_id' => ['nullable'],
             'original_estimate_seconds' => ['nullable', 'integer', 'min:0'],
+            'start_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'parent_id' => ['nullable', 'uuid', new ValidParentIssue((string) ($this->route('project_id') ?? $this->input('project_id')), null)],
         ];
     }
 

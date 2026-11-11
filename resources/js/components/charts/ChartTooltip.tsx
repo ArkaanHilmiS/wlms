@@ -41,7 +41,7 @@ export function ChartTooltip({
     }
 
     const estimatedTooltipWidth = 180;
-    const estimatedTooltipHeight = 32 + (items.length * 20);
+    const estimatedTooltipHeight = 32 + items.length * 20;
 
     const offsetX = offset.x ?? 12;
     const offsetY = offset.y ?? 12;
@@ -89,10 +89,10 @@ export function ChartTooltip({
         <div
             className={cn(
                 'pointer-events-none absolute z-50 transition-transform duration-75 ease-out',
-                'bg-popover text-popover-foreground border border-border/80 shadow-lg backdrop-blur-xs',
+                'bg-popover text-popover-foreground border-border/80 border shadow-lg backdrop-blur-xs',
                 'flex flex-col',
                 currentDensity.container,
-                className
+                className,
             )}
             style={{
                 left: `${left}px`,
@@ -108,8 +108,8 @@ export function ChartTooltip({
                     {title && (
                         <div
                             className={cn(
-                                'border-b border-border/60 text-foreground truncate',
-                                currentDensity.title
+                                'border-border/60 text-foreground truncate border-b',
+                                currentDensity.title,
                             )}
                         >
                             {title}
@@ -122,27 +122,29 @@ export function ChartTooltip({
                                     key={`${item.label}-${index}`}
                                     className={cn(
                                         'flex items-center justify-between',
-                                        currentDensity.item
+                                        currentDensity.item,
                                     )}
                                 >
                                     <div className="flex items-center gap-1.5 truncate">
                                         {item.color && (
                                             <span
                                                 className={cn(
-                                                    'rounded-full shrink-0',
-                                                    currentDensity.dot
+                                                    'shrink-0 rounded-full',
+                                                    currentDensity.dot,
                                                 )}
-                                                style={{ backgroundColor: item.color }}
+                                                style={{
+                                                    backgroundColor: item.color,
+                                                }}
                                             />
                                         )}
                                         <span className="text-muted-foreground truncate">
                                             {item.label}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-1 font-medium tabular-nums ml-2 shrink-0">
+                                    <div className="ml-2 flex shrink-0 items-center gap-1 font-medium tabular-nums">
                                         <span>{item.value}</span>
                                         {item.badge && (
-                                            <span className="text-[10px] bg-muted px-1 rounded text-muted-foreground">
+                                            <span className="bg-muted text-muted-foreground rounded px-1 text-[10px]">
                                                 {item.badge}
                                             </span>
                                         )}

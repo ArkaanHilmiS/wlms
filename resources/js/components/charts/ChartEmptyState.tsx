@@ -72,30 +72,52 @@ export function ChartEmptyState({
         <div
             className={cn(
                 'flex w-full flex-col items-center justify-center text-center',
-                'border-2 border-dashed border-border/70 bg-muted/10',
+                'border-border/70 bg-muted/10 border-2 border-dashed',
                 currentDensity.minHeight,
                 currentDensity.wrapper,
-                className
+                className,
             )}
-            style={height ? { height: typeof height === 'number' ? `${height}px` : height } : undefined}
+            style={
+                height
+                    ? {
+                          height:
+                              typeof height === 'number'
+                                  ? `${height}px`
+                                  : height,
+                      }
+                    : undefined
+            }
             data-slot="chart-empty-state"
         >
             <div
                 className={cn(
-                    'flex items-center justify-center rounded-full bg-muted/60 text-muted-foreground ring-1 ring-border/50',
-                    currentDensity.iconContainer
+                    'bg-muted/60 text-muted-foreground ring-border/50 flex items-center justify-center rounded-full ring-1',
+                    currentDensity.iconContainer,
                 )}
                 aria-hidden="true"
             >
-                <Icon size={currentDensity.iconSize} className="stroke-[1.75]" />
+                <Icon
+                    size={currentDensity.iconSize}
+                    className="stroke-[1.75]"
+                />
             </div>
 
-            <div className="flex flex-col items-center gap-1 mt-1">
-                <h4 className={cn('text-foreground tracking-tight', currentDensity.title)}>
+            <div className="mt-1 flex flex-col items-center gap-1">
+                <h4
+                    className={cn(
+                        'text-foreground tracking-tight',
+                        currentDensity.title,
+                    )}
+                >
                     {displayTitle}
                 </h4>
                 {displayDescription && (
-                    <p className={cn('text-muted-foreground leading-relaxed', currentDensity.desc)}>
+                    <p
+                        className={cn(
+                            'text-muted-foreground leading-relaxed',
+                            currentDensity.desc,
+                        )}
+                    >
                         {displayDescription}
                     </p>
                 )}

@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { usePage } from '@inertiajs/react';
-import { useGetWorkspaceMembers, useAddWorkspaceMember, useRemoveWorkspaceMember, useUpdateWorkspaceMember } from '../hooks/useWorkspaceMembers';
+import {
+    useGetWorkspaceMembers,
+    useAddWorkspaceMember,
+    useRemoveWorkspaceMember,
+    useUpdateWorkspaceMember,
+} from '../hooks/useWorkspaceMembers';
 import { toast } from 'sonner';
 import { WorkspaceMembersUI } from './WorkspaceMembersUI';
 import { useTranslate } from '@/hooks/useTranslate';
@@ -18,7 +23,12 @@ interface LookupUser {
     email: string;
 }
 
-export function WorkspaceMembersDialog({ workspaceId, workspaceName, open, onOpenChange }: WorkspaceMembersDialogProps) {
+export function WorkspaceMembersDialog({
+    workspaceId,
+    workspaceName,
+    open,
+    onOpenChange,
+}: WorkspaceMembersDialogProps) {
     const { t } = useTranslate();
     const { props } = usePage();
     const lookups = (props.lookups || {}) as { users?: LookupUser[] };
@@ -26,17 +36,26 @@ export function WorkspaceMembersDialog({ workspaceId, workspaceName, open, onOpe
 
     const [selectedUserId, setSelectedUserId] = useState<string>('');
 
-    const { data: members = [], isLoading: isLoadingMembers } = useGetWorkspaceMembers(workspaceId);
-    const { mutateAsync: addMember, isPending: isAdding } = useAddWorkspaceMember(workspaceId);
-    const { mutateAsync: removeMember, isPending: isRemoving } = useRemoveWorkspaceMember(workspaceId);
-    const { mutateAsync: updateMember, isPending: isUpdating } = useUpdateWorkspaceMember(workspaceId);
+    const { data: members = [], isLoading: isLoadingMembers } =
+        useGetWorkspaceMembers(workspaceId);
+    const { mutateAsync: addMember, isPending: isAdding } =
+        useAddWorkspaceMember(workspaceId);
+    const { mutateAsync: removeMember, isPending: isRemoving } =
+        useRemoveWorkspaceMember(workspaceId);
+    const { mutateAsync: updateMember, isPending: isUpdating } =
+        useUpdateWorkspaceMember(workspaceId);
 
     const handleUpdateCapacity = async (userId: string, hours: number) => {
         try {
-            await updateMember({ userId, payload: { daily_capacity_hours: hours } });
+            await updateMember({
+                userId,
+                payload: { daily_capacity_hours: hours },
+            });
             toast.success(t('Capacity updated successfully'));
         } catch (error: any) {
-            toast.error(error.response?.data?.message || t('Failed to update capacity'));
+            toast.error(
+                error.response?.data?.message || t('Failed to update capacity'),
+            );
         }
     };
 
@@ -45,7 +64,9 @@ export function WorkspaceMembersDialog({ workspaceId, workspaceName, open, onOpe
             await updateMember({ userId, payload: { role } });
             toast.success(t('Role updated successfully'));
         } catch (error: any) {
-            toast.error(error.response?.data?.message || t('Failed to update role'));
+            toast.error(
+                error.response?.data?.message || t('Failed to update role'),
+            );
         }
     };
 
@@ -57,7 +78,9 @@ export function WorkspaceMembersDialog({ workspaceId, workspaceName, open, onOpe
             toast.success(t('Member added successfully'));
             setSelectedUserId('');
         } catch (error: any) {
-            toast.error(error.response?.data?.message || t('Failed to add member'));
+            toast.error(
+                error.response?.data?.message || t('Failed to add member'),
+            );
         }
     };
 
@@ -66,15 +89,17 @@ export function WorkspaceMembersDialog({ workspaceId, workspaceName, open, onOpe
             await removeMember(userId);
             toast.success(t('Member removed successfully'));
         } catch (error: any) {
-            toast.error(error.response?.data?.message || t('Failed to remove member'));
+            toast.error(
+                error.response?.data?.message || t('Failed to remove member'),
+            );
         }
     };
 
-    const memberIds = members.map(m => m.id);
-    const availableUsers = allUsers.filter(u => !memberIds.includes(u.id));
-    const userOptions = availableUsers.map(u => ({
+    const memberIds = members.map((m) => m.id);
+    const availableUsers = allUsers.filter((u) => !memberIds.includes(u.id));
+    const userOptions = availableUsers.map((u) => ({
         value: u.id,
-        label: `${u.name} (${u.email})`
+        label: `${u.name} (${u.email})`,
     }));
 
     return (

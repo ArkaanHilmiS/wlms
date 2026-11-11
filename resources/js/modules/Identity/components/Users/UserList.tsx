@@ -8,19 +8,44 @@ import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, Building2 } from 'lucide-react';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface UserListProps {
     users: User[];
     roles: Role[];
     orgUnits: { id: string; name: string }[];
     isAssigning: boolean;
+    isRevoking?: boolean;
     isUpdating?: boolean;
-    onAssignRole: (payload: { user_id: string; role_id: string }) => Promise<void>;
-    onUpdateUser?: (payload: { id: string; org_unit_id: string | null }) => Promise<void>;
+    onAssignRole: (payload: {
+        user_id: string;
+        role_id: string;
+        context_type?: string | null;
+        context_id?: string | null;
+    }) => Promise<void>;
+    onRevokeRole?: (payload: {
+        user_id: string;
+        role_id: string;
+        context_type?: string | null;
+        context_id?: string | null;
+    }) => Promise<void>;
+    onUpdateUser?: (payload: {
+        id: string;
+        org_unit_id: string | null;
+    }) => Promise<void>;
 }
 
-export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = false, onAssignRole, onUpdateUser }: UserListProps) {
+export function UserList({
+    users,
+    roles,
+    orgUnits,
+    isAssigning,
+    isRevoking = false,
+    isUpdating = false,
+    onAssignRole,
+    onRevokeRole,
+    onUpdateUser,
+}: UserListProps) {
     const { t } = useTranslate();
     const columns = useMemo<ColumnDef<User>[]>(
         () => [
@@ -29,20 +54,26 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
                 header: ({ column }) => (
                     <Button
                         variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === 'asc')
+                        }
                         className="-ml-4"
                     >
                         {t('Name')}
-                                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 ),
-                cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+                cell: ({ row }) => (
+                    <div className="font-medium">{row.getValue('name')}</div>
+                ),
             },
             {
                 accessorKey: 'email',
                 header: 'Email',
                 cell: ({ row }) => (
-                    <span className="text-muted-foreground">{row.getValue('email')}</span>
+                    <span className="text-muted-foreground">
+                        {row.getValue('email')}
+                    </span>
                 ),
             },
             {
@@ -52,7 +83,7 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
                     const name = row.original.org_unit_name;
                     return name ? (
                         <div className="flex items-center gap-1.5 text-sm">
-                            <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <Building2 className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                             <span>{name}</span>
                         </div>
                     ) : (
@@ -64,14 +95,62 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
                 accessorKey: 'roles',
                 header: 'Roles',
                 cell: ({ row }) => {
+                    if (row.original.user_roles?.length) {
+                        return (
+                            <div className="flex flex-wrap gap-1">
+                                {row.original.user_roles.map((ur, idx) => (
+                                    <Badge
+                                        key={`${ur.role_id}-${ur.context_type ?? ''}-${ur.context_id ?? idx}`}
+                                        variant="secondary"
+                                        className="flex items-center gap-1 text-xs"
+                                    >
+                                        <span>
+                                            {ur.role_name}
+                                            {ur.context_type &&
+                                            ur.context_type !== 'GLOBAL'
+                                                ? ` (${ur.context_type})`
+                                                : ''}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            disabled={isRevoking}
+                                            onClick={() =>
+                                                onRevokeRole?.({
+                                                    user_id: String(
+                                                        row.original.id,
+                                                    ),
+                                                    role_id: ur.role_id,
+                                                    context_type:
+                                                        ur.context_type,
+                                                    context_id: ur.context_id,
+                                                })
+                                            }
+                                            className="hover:text-destructive ml-0.5 focus:outline-none disabled:opacity-50"
+                                            title={t('Revoke role')}
+                                        >
+                                            ×
+                                        </button>
+                                    </Badge>
+                                ))}
+                            </div>
+                        );
+                    }
                     const userRoles: string[] = row.original.roles ?? [];
                     if (userRoles.length === 0) {
-                        return <span className="text-muted-foreground text-xs">{t('No role')}</span>;
+                        return (
+                            <span className="text-muted-foreground text-xs">
+                                {t('No role')}
+                            </span>
+                        );
                     }
                     return (
                         <div className="flex flex-wrap gap-1">
                             {userRoles.map((r) => (
-                                <Badge key={r} variant="secondary" className="text-xs">
+                                <Badge
+                                    key={r}
+                                    variant="secondary"
+                                    className="text-xs"
+                                >
                                     {r}
                                 </Badge>
                             ))}
@@ -85,7 +164,7 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
                 cell: ({ row }) => {
                     const user = row.original;
                     return (
-                        <div className="flex justify-end items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                             {onUpdateUser && (
                                 <UserAssignOrgUnitDialog
                                     user={user}
@@ -105,7 +184,16 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
                 },
             },
         ],
-        [roles, orgUnits, isAssigning, isUpdating, onAssignRole, onUpdateUser]
+        [
+            roles,
+            orgUnits,
+            isAssigning,
+            isRevoking,
+            isUpdating,
+            onAssignRole,
+            onRevokeRole,
+            onUpdateUser,
+        ],
     );
 
     return (
@@ -114,4 +202,3 @@ export function UserList({ users, roles, orgUnits, isAssigning, isUpdating = fal
         </div>
     );
 }
-

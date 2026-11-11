@@ -14,16 +14,48 @@ class MenuAndPermissionSeeder extends Seeder
         // 1. SEED PERMISSIONS
         // ==========================================
         $permissions = [
+            // Users
             ['name' => 'users:view', 'description' => 'View users list'],
-            ['name' => 'users:manage', 'description' => 'Create, update, delete users'],
+            ['name' => 'users:create', 'description' => 'Create new users'],
+            ['name' => 'users:edit', 'description' => 'Edit user profiles and roles'],
+            ['name' => 'users:delete', 'description' => 'Delete or deactivate users'],
+            ['name' => 'users:manage', 'description' => 'Full access to manage users'],
+
+            // Roles
             ['name' => 'roles:view', 'description' => 'View roles list'],
-            ['name' => 'roles:manage', 'description' => 'Create, update, delete roles, assign access'],
+            ['name' => 'roles:create', 'description' => 'Create new roles'],
+            ['name' => 'roles:edit', 'description' => 'Edit role details and permissions'],
+            ['name' => 'roles:delete', 'description' => 'Delete custom roles'],
+            ['name' => 'roles:manage', 'description' => 'Full access to manage roles'],
+
+            // Workspaces
             ['name' => 'workspaces:view', 'description' => 'View workspaces'],
-            ['name' => 'workspaces:manage', 'description' => 'Manage workspaces'],
+            ['name' => 'workspaces:create', 'description' => 'Create new workspaces'],
+            ['name' => 'workspaces:edit', 'description' => 'Edit workspace settings'],
+            ['name' => 'workspaces:delete', 'description' => 'Archive or delete workspaces'],
+            ['name' => 'workspaces:manage', 'description' => 'Full access to manage workspaces'],
+
+            // Projects
             ['name' => 'projects:view', 'description' => 'View projects'],
-            ['name' => 'projects:manage', 'description' => 'Manage projects'],
+            ['name' => 'projects:create', 'description' => 'Create new projects'],
+            ['name' => 'projects:edit', 'description' => 'Edit project details'],
+            ['name' => 'projects:delete', 'description' => 'Archive or delete projects'],
+            ['name' => 'projects:manage', 'description' => 'Full access to manage projects'],
+
+            // Issues
             ['name' => 'issues:view', 'description' => 'View issues'],
-            ['name' => 'issues:manage', 'description' => 'Manage issues'],
+            ['name' => 'issues:create', 'description' => 'Create new issues'],
+            ['name' => 'issues:edit', 'description' => 'Edit issue details'],
+            ['name' => 'issues:assign', 'description' => 'Assign issues to members'],
+            ['name' => 'issues:delete', 'description' => 'Delete issues'],
+            ['name' => 'issues:manage', 'description' => 'Full access to manage issues'],
+
+            // Sprints
+            ['name' => 'sprints:view', 'description' => 'View sprints'],
+            ['name' => 'sprints:manage', 'description' => 'Start, update, and complete sprints'],
+
+            // Analytics
+            ['name' => 'analytics:view', 'description' => 'View workload analytics and metrics'],
         ];
 
         $permissionIds = [];

@@ -12,7 +12,7 @@ import {
 import { OrgLevelList } from './OrgLevelList';
 import { OrgLevelFormDialog, OrgLevelFormData } from './OrgLevelFormDialog';
 import { toast } from 'sonner';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 const DEFAULT_FORM_DATA: OrgLevelFormData = {
     name: '',
@@ -49,7 +49,8 @@ export function OrgLevelManager({ createTrigger = 0 }: OrgLevelManagerProps) {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingLevel, setEditingLevel] = useState<OrgLevel | null>(null);
-    const [formData, setFormData] = useState<OrgLevelFormData>(DEFAULT_FORM_DATA);
+    const [formData, setFormData] =
+        useState<OrgLevelFormData>(DEFAULT_FORM_DATA);
 
     const openCreateDialog = () => {
         setEditingLevel(null);
@@ -122,10 +123,16 @@ export function OrgLevelManager({ createTrigger = 0 }: OrgLevelManagerProps) {
         <div className="space-y-4">
             {isLoading ? (
                 <div className="flex h-32 items-center justify-center rounded-md border">
-                    <span className="text-sm text-muted-foreground">{t('Loading levels...')}</span>
+                    <span className="text-muted-foreground text-sm">
+                        {t('Loading levels...')}
+                    </span>
                 </div>
             ) : (
-                <OrgLevelList levels={levels} onEdit={openEditDialog} onDelete={handleDelete} />
+                <OrgLevelList
+                    levels={levels}
+                    onEdit={openEditDialog}
+                    onDelete={handleDelete}
+                />
             )}
 
             <OrgLevelFormDialog

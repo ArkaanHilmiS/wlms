@@ -38,7 +38,10 @@ final class Issue
         private ?int $storyPoints,
         private ?int $originalEstimateSeconds,
         private ?int $remainingEstimateSeconds,
-        private readonly DateTimeImmutable $createdAt
+        private readonly DateTimeImmutable $createdAt,
+        private ?string $startDate = null,
+        private ?string $dueDate = null,
+        private ?string $parentId = null,
     ) {}
 
     public static function create(
@@ -52,7 +55,10 @@ final class Issue
         StatusId $initialStatusId,
         ?SprintId $sprintId,
         string $reporterId,
-        ?int $originalEstimateSeconds = null
+        ?int $originalEstimateSeconds = null,
+        ?string $startDate = null,
+        ?string $dueDate = null,
+        ?string $parentId = null,
     ): self {
         $issue = new self(
             $id,
@@ -69,7 +75,10 @@ final class Issue
             null,
             $originalEstimateSeconds,
             $originalEstimateSeconds,
-            new DateTimeImmutable
+            new DateTimeImmutable,
+            $startDate,
+            $dueDate,
+            $parentId,
         );
 
         $issue->recordEvent(new IssueCreated(
@@ -207,5 +216,20 @@ final class Issue
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getStartDate(): ?string
+    {
+        return $this->startDate;
+    }
+
+    public function getDueDate(): ?string
+    {
+        return $this->dueDate;
+    }
+
+    public function getParentId(): ?string
+    {
+        return $this->parentId;
     }
 }

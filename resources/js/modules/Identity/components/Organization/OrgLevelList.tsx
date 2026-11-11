@@ -2,21 +2,21 @@ import React, { useMemo } from 'react';
 import { OrgLevel } from '../../hooks/use-org-levels';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Edit2, Trash2, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/data-table';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface OrgLevelListProps {
     levels: OrgLevel[];
@@ -34,15 +34,21 @@ export function OrgLevelList({ levels, onEdit, onDelete }: OrgLevelListProps) {
                     return (
                         <Button
                             variant="ghost"
-                            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                            onClick={() =>
+                                column.toggleSorting(
+                                    column.getIsSorted() === 'asc',
+                                )
+                            }
                             className="-ml-4"
                         >
                             {t('Level Name')}
-                                                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
-                    )
+                    );
                 },
-                cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+                cell: ({ row }) => (
+                    <div className="font-medium">{row.getValue('name')}</div>
+                ),
             },
             {
                 accessorKey: 'slug',
@@ -70,10 +76,14 @@ export function OrgLevelList({ levels, onEdit, onDelete }: OrgLevelListProps) {
                 cell: ({ row }) => {
                     const level = row.original;
                     return (
-                        <div className="space-x-1 flex">
-                            {level.is_leaf && <Badge variant="outline">{t('Leaf')}</Badge>}
+                        <div className="flex space-x-1">
+                            {level.is_leaf && (
+                                <Badge variant="outline">{t('Leaf')}</Badge>
+                            )}
                             {level.can_own_workspace && (
-                                <Badge variant="outline">{t('Workspace Owner')}</Badge>
+                                <Badge variant="outline">
+                                    {t('Workspace Owner')}
+                                </Badge>
                             )}
                         </div>
                     );
@@ -85,7 +95,7 @@ export function OrgLevelList({ levels, onEdit, onDelete }: OrgLevelListProps) {
                 cell: ({ row }) => {
                     const level = row.original;
                     return (
-                        <div className="text-right space-x-2">
+                        <div className="space-x-2 text-right">
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -107,16 +117,25 @@ export function OrgLevelList({ levels, onEdit, onDelete }: OrgLevelListProps) {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
+                                        <AlertDialogTitle>
+                                            {t('Are you absolutely sure?')}
+                                        </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the level "{level.name}".
+                                            This action cannot be undone. This
+                                            will permanently delete the level "
+                                            {level.name}".
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => onDelete(level)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                        <AlertDialogCancel>
+                                            {t('Cancel')}
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => onDelete(level)}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
                                             {t('Delete')}
-                                                                                    </AlertDialogAction>
+                                        </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -125,9 +144,8 @@ export function OrgLevelList({ levels, onEdit, onDelete }: OrgLevelListProps) {
                 },
             },
         ],
-        [onEdit, onDelete]
+        [onEdit, onDelete],
     );
-
 
     return (
         <div className="w-full">

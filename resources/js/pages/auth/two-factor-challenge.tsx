@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/input-otp';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { store } from '@/routes/two-factor/login';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 export default function TwoFactorChallenge() {
     const { t } = useTranslate();
@@ -25,20 +25,22 @@ export default function TwoFactorChallenge() {
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery code',
-                description:
+                title: t('Recovery code'),
+                description: t(
                     'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                ),
+                toggleText: t('login using an authentication code'),
             };
         }
 
         return {
-            title: 'Authentication code',
-            description:
+            title: t('Authentication code'),
+            description: t(
                 'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+            ),
+            toggleText: t('login using a recovery code'),
         };
-    }, [showRecoveryInput]);
+    }, [showRecoveryInput, t]);
 
     setLayoutProps({
         title: authConfigContent.title,
@@ -112,7 +114,7 @@ export default function TwoFactorChallenge() {
                                 disabled={processing}
                             >
                                 {t('Continue')}
-                                                            </Button>
+                            </Button>
 
                             <div className="text-muted-foreground text-center text-sm">
                                 <span>{t('or you can')} </span>

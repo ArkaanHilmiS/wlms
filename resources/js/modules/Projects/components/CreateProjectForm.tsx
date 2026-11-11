@@ -17,7 +17,11 @@ interface CreateProjectFormProps {
     defaultWorkspaceId?: string;
 }
 
-export function CreateProjectForm({ onSubmit, isLoading, defaultWorkspaceId = '' }: CreateProjectFormProps) {
+export function CreateProjectForm({
+    onSubmit,
+    isLoading,
+    defaultWorkspaceId = '',
+}: CreateProjectFormProps) {
     const [formData, setFormData] = useState<CreateProjectFormData>({
         workspace_id: defaultWorkspaceId,
         key: '',
@@ -26,7 +30,9 @@ export function CreateProjectForm({ onSubmit, isLoading, defaultWorkspaceId = ''
         lead_id: '',
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -48,7 +54,7 @@ export function CreateProjectForm({ onSubmit, isLoading, defaultWorkspaceId = ''
                     required
                 />
             </div>
-            
+
             <div className="space-y-2">
                 <Label htmlFor="key">Project Key</Label>
                 <Input
@@ -91,7 +97,7 @@ export function CreateProjectForm({ onSubmit, isLoading, defaultWorkspaceId = ''
                 />
             </div>
 
-            <div className="pt-4 flex justify-end">
+            <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isLoading}>
                     {isLoading ? 'Creating...' : 'Create Project'}
                 </Button>
@@ -99,4 +105,3 @@ export function CreateProjectForm({ onSubmit, isLoading, defaultWorkspaceId = ''
         </form>
     );
 }
-

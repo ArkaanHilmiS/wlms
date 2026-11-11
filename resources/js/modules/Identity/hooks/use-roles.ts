@@ -39,7 +39,14 @@ export function useCreateRole() {
 export function useUpdateRole() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, ...payload }: { id: string; name: string; scope: string }) => {
+        mutationFn: async ({
+            id,
+            ...payload
+        }: {
+            id: string;
+            name: string;
+            scope: string;
+        }) => {
             const { data } = await axios.put(`/api/rbac/roles/${id}`, payload);
             return data.data;
         },
@@ -64,10 +71,19 @@ export function useDeleteRole() {
 export function useSyncPermissions() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
-            const { data } = await axios.put(`/api/rbac/roles/${roleId}/permissions`, {
-                permission_ids: permissionIds,
-            });
+        mutationFn: async ({
+            roleId,
+            permissionIds,
+        }: {
+            roleId: string;
+            permissionIds: string[];
+        }) => {
+            const { data } = await axios.put(
+                `/api/rbac/roles/${roleId}/permissions`,
+                {
+                    permission_ids: permissionIds,
+                },
+            );
             return data;
         },
         onSuccess: () => {
@@ -79,10 +95,19 @@ export function useSyncPermissions() {
 export function useSyncMenus() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ roleId, menuIds }: { roleId: string; menuIds: string[] }) => {
-            const { data } = await axios.put(`/api/rbac/roles/${roleId}/menus`, {
-                menu_ids: menuIds,
-            });
+        mutationFn: async ({
+            roleId,
+            menuIds,
+        }: {
+            roleId: string;
+            menuIds: string[];
+        }) => {
+            const { data } = await axios.put(
+                `/api/rbac/roles/${roleId}/menus`,
+                {
+                    menu_ids: menuIds,
+                },
+            );
             return data;
         },
         onSuccess: () => {

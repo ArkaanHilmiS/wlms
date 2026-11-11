@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CreateSprintForm, CreateSprintFormData } from './CreateSprintForm';
 import { useCreateSprint } from '@/hooks/sprints/use-create-sprint';
@@ -10,7 +17,10 @@ interface CreateSprintDialogProps {
     defaultProjectId?: string;
 }
 
-export function CreateSprintDialog({ children, defaultProjectId }: CreateSprintDialogProps) {
+export function CreateSprintDialog({
+    children,
+    defaultProjectId,
+}: CreateSprintDialogProps) {
     const [open, setOpen] = useState(false);
     const createSprintMutation = useCreateSprint();
 
@@ -23,7 +33,7 @@ export function CreateSprintDialog({ children, defaultProjectId }: CreateSprintD
             onError: (error) => {
                 toast.error('Failed to create sprint');
                 console.error(error);
-            }
+            },
         });
     };
 
@@ -36,11 +46,12 @@ export function CreateSprintDialog({ children, defaultProjectId }: CreateSprintD
                 <DialogHeader>
                     <DialogTitle>Create Sprint</DialogTitle>
                     <DialogDescription>
-                        Plan a new sprint for your project. Click save when you're done.
+                        Plan a new sprint for your project. Click save when
+                        you're done.
                     </DialogDescription>
                 </DialogHeader>
-                <CreateSprintForm 
-                    onSubmit={handleSubmit} 
+                <CreateSprintForm
+                    onSubmit={handleSubmit}
                     isLoading={createSprintMutation.isPending}
                     defaultProjectId={defaultProjectId}
                 />
@@ -48,4 +59,3 @@ export function CreateSprintDialog({ children, defaultProjectId }: CreateSprintD
         </Dialog>
     );
 }
-

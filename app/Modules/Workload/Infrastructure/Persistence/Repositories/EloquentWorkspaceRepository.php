@@ -42,7 +42,7 @@ final class EloquentWorkspaceRepository implements WorkspaceRepositoryInterface
 
     public function countByGroupId(string $groupId): int
     {
-        return WorkspaceModel::query()->where('owner_group_id', $groupId)->count();
+        return WorkspaceModel::query()->where('owner_group_id', $groupId)->where('status', 'ACTIVE')->count();
     }
 
     /**

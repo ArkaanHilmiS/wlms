@@ -31,3 +31,6 @@ yarn-error.log
 # Temporary Agent Scripts
 .scratch/
 
+
+.agents/
+/.vitest/

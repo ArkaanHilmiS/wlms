@@ -45,30 +45,69 @@ final class NotificationEventSubscriber
     {
         $issue = IssueModel::select('reporter_id')->find($event->issueId);
 
-        if ($issue === null || $issue->reporter_id === null) {
-            return;
+        // 1. Notify reporter if different from author
+        if ($issue !== null && $issue->reporter_id !== null && (string) $issue->reporter_id !== $event->authorId) {
+            $reporterUserId = $this->resolveUserId($issue->reporter_id);
+            if ($reporterUserId) {
+                $this->createAndBroadcast(
+                    userId: $reporterUserId,
+                    type: 'comment.added',
+                    data: [
+                        'issue_id' => $event->issueId,
+                        'comment_id' => $event->commentId,
+                        'author_id' => $event->authorId,
+                        'body_preview' => mb_substr($event->body, 0, 50),
+                    ]
+                );
+            }
         }
 
-        // Don't notify the author if they commented on their own issue
-        if ((string) $issue->reporter_id === $event->authorId) {
-            return;
-        }
+        // 2. Parse @mentions and notify mentioned users
+        preg_match_all('/@([a-zA-Z0-9._-]+)/', $event->body, $matches);
+        if (! empty($matches[1])) {
+            $handles = array_unique($matches[1]);
+            $author = UserModel::find($event->authorId);
+            $authorName = $author ? (string) $author->name : 'Someone';
 
-        $userId = $this->resolveUserId($issue->reporter_id);
-        if (! $userId) {
-            return;
-        }
+            $mentionedUsers = UserModel::where(function ($query) use ($handles) {
+                foreach ($handles as $handle) {
+                    $query->orWhere('name', 'LIKE', "%{$handle}%")
+                        ->orWhere('email', 'LIKE', "{$handle}@%")
+                        ->orWhere('email', '=', $handle)
+                        ->orWhere('employee_id', '=', $handle);
+                }
+            })->get(['id', 'name', 'email']);
 
-        $this->createAndBroadcast(
-            userId: $userId,
-            type: 'comment.added',
-            data: [
-                'issue_id' => $event->issueId,
-                'comment_id' => $event->commentId,
-                'author_id' => $event->authorId,
-                'body_preview' => mb_substr($event->body, 0, 50),
-            ]
-        );
+            $notifiedUserIds = [];
+            foreach ($mentionedUsers as $user) {
+                // Do not notify author
+                if ((string) $user->id === (string) $event->authorId) {
+                    continue;
+                }
+                // Avoid notifying duplicate user
+                if (in_array($user->id, $notifiedUserIds, true)) {
+                    continue;
+                }
+                // Avoid notifying reporter twice if already notified
+                if ($issue !== null && $issue->reporter_id !== null && (int) $issue->reporter_id === (int) $user->id) {
+                    continue;
+                }
+
+                $notifiedUserIds[] = $user->id;
+
+                $this->createAndBroadcast(
+                    userId: (int) $user->id,
+                    type: 'comment.mentioned',
+                    data: [
+                        'issue_id' => $event->issueId,
+                        'comment_id' => $event->commentId,
+                        'author_id' => $event->authorId,
+                        'author_name' => $authorName,
+                        'body_preview' => mb_substr($event->body, 0, 80),
+                    ]
+                );
+            }
+        }
     }
 
     public function handleIssueTransitioned(IssueTransitioned $event): void

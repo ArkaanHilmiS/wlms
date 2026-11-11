@@ -52,9 +52,9 @@ export function ChartCardSkeleton({
     return (
         <div
             className={cn(
-                'flex flex-col border border-border/80 bg-card text-card-foreground shadow-xs',
+                'border-border/80 bg-card text-card-foreground flex flex-col border shadow-xs',
                 currentDensity.card,
-                className
+                className,
             )}
             data-slot="chart-card-skeleton"
             aria-busy="true"
@@ -63,16 +63,35 @@ export function ChartCardSkeleton({
             {showHeader && (
                 <div className="flex items-center justify-between pb-1">
                     <div className="flex flex-col gap-1.5">
-                        <Skeleton className={cn('rounded-sm', currentDensity.headerTitleHeight)} />
+                        <Skeleton
+                            className={cn(
+                                'rounded-sm',
+                                currentDensity.headerTitleHeight,
+                            )}
+                        />
                         <Skeleton className="h-2.5 w-48 rounded-sm opacity-60" />
                     </div>
-                    <Skeleton className={cn('rounded-full', currentDensity.badgeHeight)} />
+                    <Skeleton
+                        className={cn(
+                            'rounded-full',
+                            currentDensity.badgeHeight,
+                        )}
+                    />
                 </div>
             )}
 
             <div
                 className={cn('w-full', !height && currentDensity.chartHeight)}
-                style={height ? { height: typeof height === 'number' ? `${height}px` : height } : undefined}
+                style={
+                    height
+                        ? {
+                              height:
+                                  typeof height === 'number'
+                                      ? `${height}px`
+                                      : height,
+                          }
+                        : undefined
+                }
             >
                 <Skeleton className="h-full w-full rounded-lg" />
             </div>

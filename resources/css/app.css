@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-
 @import 'tw-animate-css';
 
 @source '../views';
@@ -96,7 +95,7 @@
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
-            --chart-5: oklch(0.645 0.246 16.439);
+    --chart-5: oklch(0.645 0.246 16.439);
     --success: oklch(0.627 0.194 149.214); /* Green 500 */
     --success-foreground: oklch(0.14 0 0);
     --info: oklch(0.546 0.245 262.881); /* Blue 500 */
@@ -122,9 +121,9 @@
 .dark {
     --background: oklch(0.14 0 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.20 0 0);
+    --card: oklch(0.2 0 0);
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.20 0 0);
+    --popover: oklch(0.2 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.985 0 0);
     --primary-foreground: oklch(0.205 0 0);
@@ -173,37 +172,138 @@
         padding-left: 1rem;
     }
     @media (min-width: 576px) {
-        .container { max-width: 540px; }
+        .container {
+            max-width: 540px;
+        }
     }
     @media (min-width: 768px) {
-        .container { max-width: 720px; }
+        .container {
+            max-width: 720px;
+        }
     }
     @media (min-width: 992px) {
-        .container { max-width: 960px; }
+        .container {
+            max-width: 960px;
+        }
     }
     @media (min-width: 1200px) {
-        .container { max-width: 1140px; }
+        .container {
+            max-width: 1140px;
+        }
     }
     @media (min-width: 1400px) {
-        .container { max-width: 1320px; }
+        .container {
+            max-width: 1320px;
+        }
     }
 }
 
 @layer utilities {
-    .markdown-body h1 { font-size: 1.5rem; line-height: 2rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; color: var(--foreground); }
-    .markdown-body h2 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.025em; margin-top: 1.5em; margin-bottom: 0.5em; color: var(--foreground); border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
-    .markdown-body h3 { font-size: 1.125rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.025em; margin-top: 1em; margin-bottom: 0.5em; color: var(--foreground); }
-    .markdown-body p { margin-bottom: 1em; line-height: 1.6; color: var(--foreground); }
-    .markdown-body ul { list-style-type: disc; padding-left: 2em; margin-bottom: 1em; color: var(--foreground); }
-    .markdown-body ol { list-style-type: decimal; padding-left: 2em; margin-bottom: 1em; color: var(--foreground); }
-    .markdown-body li { margin-bottom: 0.25em; }
-    .markdown-body blockquote { border-left: 4px solid var(--primary); padding-left: 1em; color: var(--muted-foreground); margin-bottom: 1em; background: var(--muted); padding: 1em; border-radius: calc(var(--radius) - 4px); }
-    .markdown-body table { width: 100%; margin-bottom: 1em; border-collapse: collapse; font-size: 0.875rem; }
-    .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.75rem 1rem; text-align: left; }
-    .markdown-body th { background: var(--muted); font-weight: 600; color: var(--foreground); }
-    .markdown-body code { background: var(--muted); padding: 0.2em 0.4em; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; color: var(--foreground); }
-    .markdown-body pre { background: var(--muted); padding: 1rem; border-radius: var(--radius); overflow-x: auto; margin-bottom: 1em; border: 1px solid var(--border); }
-    .markdown-body pre code { background: none; padding: 0; border: none; }
-    .markdown-body hr { border: 0; border-bottom: 1px solid var(--border); margin: 2em 0; }
-    .markdown-body img { border-radius: var(--radius); border: 1px solid var(--border); }
+    .markdown-body h1 {
+        font-size: 1.5rem;
+        line-height: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5em;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.3em;
+        color: var(--foreground);
+    }
+    .markdown-body h2 {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        color: var(--foreground);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.3em;
+    }
+    .markdown-body h3 {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        color: var(--foreground);
+    }
+    .markdown-body p {
+        margin-bottom: 1em;
+        line-height: 1.6;
+        color: var(--foreground);
+    }
+    .markdown-body ul {
+        list-style-type: disc;
+        padding-left: 2em;
+        margin-bottom: 1em;
+        color: var(--foreground);
+    }
+    .markdown-body ol {
+        list-style-type: decimal;
+        padding-left: 2em;
+        margin-bottom: 1em;
+        color: var(--foreground);
+    }
+    .markdown-body li {
+        margin-bottom: 0.25em;
+    }
+    .markdown-body blockquote {
+        border-left: 4px solid var(--primary);
+        padding-left: 1em;
+        color: var(--muted-foreground);
+        margin-bottom: 1em;
+        background: var(--muted);
+        padding: 1em;
+        border-radius: calc(var(--radius) - 4px);
+    }
+    .markdown-body table {
+        width: 100%;
+        margin-bottom: 1em;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .markdown-body th,
+    .markdown-body td {
+        border: 1px solid var(--border);
+        padding: 0.75rem 1rem;
+        text-align: left;
+    }
+    .markdown-body th {
+        background: var(--muted);
+        font-weight: 600;
+        color: var(--foreground);
+    }
+    .markdown-body code {
+        background: var(--muted);
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-family:
+            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.875em;
+        color: var(--foreground);
+    }
+    .markdown-body pre {
+        background: var(--muted);
+        padding: 1rem;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin-bottom: 1em;
+        border: 1px solid var(--border);
+    }
+    .markdown-body pre code {
+        background: none;
+        padding: 0;
+        border: none;
+    }
+    .markdown-body hr {
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        margin: 2em 0;
+    }
+    .markdown-body img {
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+    }
 }

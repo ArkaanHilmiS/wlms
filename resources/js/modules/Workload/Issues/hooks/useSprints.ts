@@ -14,10 +14,16 @@ export const useSprints = (projectId: string) => {
     const queryKey = ['projects', projectId, 'sprints'];
 
     // GET: Fetch all sprints for a project
-    const { data: sprints = [], isLoading, error } = useQuery<Sprint[]>({
+    const {
+        data: sprints = [],
+        isLoading,
+        error,
+    } = useQuery<Sprint[]>({
         queryKey,
         queryFn: async () => {
-            const { data } = await axios.get(`/api/projects/${projectId}/sprints`);
+            const { data } = await axios.get(
+                `/api/projects/${projectId}/sprints`,
+            );
             return data.data ? data.data : data;
         },
         enabled: !!projectId,
@@ -31,20 +37,30 @@ export const useSprints = (projectId: string) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
-            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'issues'] });
+            queryClient.invalidateQueries({
+                queryKey: ['projects', projectId, 'issues'],
+            });
             queryClient.invalidateQueries({ queryKey: ['sprints'] });
         },
     });
 
-        // PUT: Update sprint
+    // PUT: Update sprint
     const updateMutation = useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: UpdateSprintPayload }) => {
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: UpdateSprintPayload;
+        }) => {
             const { data } = await axios.put(`/api/sprints/${id}`, payload);
             return data.data ? data.data : data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
-            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'issues'] });
+            queryClient.invalidateQueries({
+                queryKey: ['projects', projectId, 'issues'],
+            });
             queryClient.invalidateQueries({ queryKey: ['sprints'] });
         },
     });
@@ -57,20 +73,33 @@ export const useSprints = (projectId: string) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
-            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'issues'] });
+            queryClient.invalidateQueries({
+                queryKey: ['projects', projectId, 'issues'],
+            });
             queryClient.invalidateQueries({ queryKey: ['sprints'] });
         },
     });
 
     // PUT: Complete sprint
     const completeMutation = useMutation({
-        mutationFn: async ({ sprintId, moveToSprintId }: { sprintId: string, moveToSprintId: string | null }) => {
-            const { data } = await axios.put(`/api/sprints/${sprintId}/complete`, { move_to_sprint_id: moveToSprintId });
+        mutationFn: async ({
+            sprintId,
+            moveToSprintId,
+        }: {
+            sprintId: string;
+            moveToSprintId: string | null;
+        }) => {
+            const { data } = await axios.put(
+                `/api/sprints/${sprintId}/complete`,
+                { move_to_sprint_id: moveToSprintId },
+            );
             return data.data ? data.data : data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey });
-            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'issues'] });
+            queryClient.invalidateQueries({
+                queryKey: ['projects', projectId, 'issues'],
+            });
             queryClient.invalidateQueries({ queryKey: ['sprints'] });
         },
     });
@@ -100,11 +129,13 @@ export interface SprintWorkloadMember {
 
 export const useSprintWorkload = (sprintId: string | null) => {
     const queryKey = ['sprints', sprintId, 'workload'];
-    
+
     return useQuery<SprintWorkloadMember[]>({
         queryKey,
         queryFn: async () => {
-            const { data } = await axios.get(`/api/sprints/${sprintId}/workload`);
+            const { data } = await axios.get(
+                `/api/sprints/${sprintId}/workload`,
+            );
             return data.data ? data.data : data;
         },
         enabled: !!sprintId,

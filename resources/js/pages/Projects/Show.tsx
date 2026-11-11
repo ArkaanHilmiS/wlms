@@ -1,16 +1,25 @@
+import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import axios from 'axios';
 import { IssuesManager } from '@/modules/Workload/Issues/components/IssuesManager';
 import { Project } from '@/modules/Workload/Projects/types';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { index as projectsIndex } from '@/routes/projects';
 import { PriorityBadge } from '@/components/PriorityBadge';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 import { useIconSize } from '@/hooks/use-appearance';
 
 interface LookupItem {
     id: string;
     name: string;
+    slug?: string;
     category?: string;
 }
 
@@ -21,6 +30,14 @@ interface ProjectShowProps {
         priorities: LookupItem[];
         statuses: LookupItem[];
         users: LookupItem[];
+        settings?: {
+            enable_sprints?: boolean;
+            sla_days_by_priority?: Record<string, number>;
+            working_days?: number[];
+            holidays?: string[];
+            worklog_max_hours_per_day?: number;
+            attachment_max_mb?: number;
+        };
     };
 }
 
@@ -51,49 +68,95 @@ export default function ProjectShow({ project, lookups }: ProjectShowProps) {
         iconSize === 'sm'
             ? 'h-8 w-8 text-sm rounded-md'
             : iconSize === 'lg'
-            ? 'h-13 w-13 text-xl rounded-xl'
-            : 'h-10 w-10 text-base rounded-lg';
+              ? 'h-13 w-13 text-xl rounded-xl'
+              : 'h-10 w-10 text-base rounded-lg';
 
     const titleSizeClass =
         iconSize === 'sm'
             ? 'text-xl font-bold tracking-tight'
             : iconSize === 'lg'
-            ? 'text-3xl font-extrabold tracking-tight'
-            : 'text-2xl font-bold tracking-tight';
+              ? 'text-3xl font-extrabold tracking-tight'
+              : 'text-2xl font-bold tracking-tight';
 
     const handleBack = () => {
-        router.visit(projectsIndex({ query: { workspace_id: project.workspace_id } }).url);
+        router.visit(
+            projectsIndex({ query: { workspace_id: project.workspace_id } })
+                .url,
+        );
     };
 
-    const currentPriority = lookups.priorities?.find(p => p.id === project.priority_id);
+    const currentPriority = lookups.priorities?.find(
+        (p) => p.id === project.priority_id,
+    );
+
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async (format: 'xlsx' | 'csv') => {
+        try {
+            setIsExporting(true);
+            const response = await axios.get(
+                `/api/projects/${project.id}/issues/export?format=${format}`,
+                { responseType: 'blob' },
+            );
+
+            const blob = new Blob([response.data], {
+                type:
+                    format === 'xlsx'
+                        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        : 'text/csv',
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute(
+                'download',
+                `${project.key || 'project'}-issues-${new Date().toISOString().slice(0, 10)}.${format}`,
+            );
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            // fail silently or user notification
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <>
             <Head title={`Project: ${project.name}`} />
-            
+
             <div className="flex h-full w-full flex-col gap-4 p-6">
                 <div>
-                    <Button variant="ghost" size="sm" onClick={handleBack} className="-ml-2 text-muted-foreground">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleBack}
+                        className="text-muted-foreground -ml-2"
+                    >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         {t('Back to Projects')}
                     </Button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3">
-                        <div className={`flex shrink-0 items-center justify-center border font-bold ${avatarSizeClass} ${avatarColor}`}>
+                        <div
+                            className={`flex shrink-0 items-center justify-center border font-bold ${avatarSizeClass} ${avatarColor}`}
+                        >
                             {project.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <h1 className={titleSizeClass}>{project.name}</h1>
-                            <div className="flex items-center gap-3 mt-1">
+                            <div className="mt-1 flex items-center gap-3">
                                 <p className="text-muted-foreground font-mono text-xs">
                                     Key: {project.key}
                                 </p>
                                 {project.priority_id && currentPriority && (
-                                    <PriorityBadge 
-                                        name={currentPriority.name} 
-                                        category={currentPriority.category} 
+                                    <PriorityBadge
+                                        name={currentPriority.name}
+                                        category={currentPriority.category}
                                         size={iconSize}
                                     />
                                 )}
@@ -101,8 +164,10 @@ export default function ProjectShow({ project, lookups }: ProjectShowProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg border">
-                        <span className="text-[11px] font-medium text-muted-foreground px-1.5 hidden sm:inline">{t('Density')}:</span>
+                    <div className="bg-muted/60 flex items-center gap-1.5 rounded-lg border p-1">
+                        <span className="text-muted-foreground hidden px-1.5 text-[11px] font-medium sm:inline">
+                            {t('Density')}:
+                        </span>
                         <Button
                             variant={iconSize === 'sm' ? 'default' : 'ghost'}
                             size="sm"
@@ -131,13 +196,44 @@ export default function ProjectShow({ project, lookups }: ProjectShowProps) {
                             L
                         </Button>
                     </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 shrink-0 gap-1.5 text-xs"
+                                disabled={isExporting}
+                            >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>
+                                    {isExporting
+                                        ? t('Exporting...')
+                                        : t('Export')}
+                                </span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => handleExport('xlsx')}
+                                className="cursor-pointer gap-2 text-xs"
+                            >
+                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                                <span>Excel (.xlsx)</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleExport('csv')}
+                                className="cursor-pointer gap-2 text-xs"
+                            >
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span>CSV (.csv)</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <div className="mt-4">
-                    <IssuesManager 
-                        projectId={project.id} 
-                        lookups={lookups}
-                    />
+                    <IssuesManager projectId={project.id} lookups={lookups} />
                 </div>
             </div>
         </>
@@ -153,6 +249,6 @@ ProjectShow.layout = {
         {
             title: 'Project Board',
             href: '',
-        }
+        },
     ],
 };

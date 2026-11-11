@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from '@/lib/axios';
-import { Workspace, WorkspaceCollectionResource, CreateWorkspacePayload, WorkspaceResource } from '../types';
+import {
+    Workspace,
+    WorkspaceCollectionResource,
+    CreateWorkspacePayload,
+    WorkspaceResource,
+} from '../types';
 
 export const WORKSPACES_QUERY_KEY = ['workspaces'];
 
@@ -9,10 +14,12 @@ export function useGetWorkspaces() {
         queryKey: WORKSPACES_QUERY_KEY,
         queryFn: async (): Promise<Workspace[]> => {
             const response = await axios.get('/api/workspaces');
-            
+
             // Backend might return the array directly or wrapped in `data`
-            const dataArray = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-            
+            const dataArray = Array.isArray(response.data)
+                ? response.data
+                : response.data?.data || [];
+
             return dataArray.map((item: any) => ({
                 id: item.id,
                 name: item.name,
@@ -28,10 +35,12 @@ export function useCreateWorkspace() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (payload: CreateWorkspacePayload): Promise<Workspace> => {
+        mutationFn: async (
+            payload: CreateWorkspacePayload,
+        ): Promise<Workspace> => {
             const response = await axios.post('/api/workspaces', payload);
             const item = response.data?.data || response.data;
-            
+
             return {
                 id: item.id,
                 name: item.name,
@@ -51,10 +60,16 @@ export function useUpdateWorkspace() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, payload }: { id: string; payload: { name: string } }): Promise<Workspace> => {
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: { name: string };
+        }): Promise<Workspace> => {
             const response = await axios.put(`/api/workspaces/${id}`, payload);
             const item = response.data?.data || response.data;
-            
+
             return {
                 id: item.id,
                 name: item.name,
@@ -81,4 +96,3 @@ export function useArchiveWorkspace() {
         },
     });
 }
-

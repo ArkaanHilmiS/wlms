@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 export interface OrgLevelFormData {
     name: string;
@@ -48,11 +48,15 @@ export function OrgLevelFormDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
-                        {editingLevel ? 'Edit Organization Level' : 'Add Organization Level'}
+                        {editingLevel
+                            ? 'Edit Organization Level'
+                            : 'Add Organization Level'}
                     </DialogTitle>
                     <DialogDescription>
-                        {t('Configure the properties of this organization level.')}
-                                            </DialogDescription>
+                        {t(
+                            'Configure the properties of this organization level.',
+                        )}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={onSubmit} className="space-y-4">
@@ -63,7 +67,10 @@ export function OrgLevelFormDialog({
                                 id="level-name"
                                 value={formData.name}
                                 onChange={(e) =>
-                                    onFormDataChange({ ...formData, name: e.target.value })
+                                    onFormDataChange({
+                                        ...formData,
+                                        name: e.target.value,
+                                    })
                                 }
                                 placeholder="e.g., Department"
                                 required
@@ -75,7 +82,10 @@ export function OrgLevelFormDialog({
                                 id="level-slug"
                                 value={formData.slug}
                                 onChange={(e) =>
-                                    onFormDataChange({ ...formData, slug: e.target.value })
+                                    onFormDataChange({
+                                        ...formData,
+                                        slug: e.target.value,
+                                    })
                                 }
                                 placeholder="e.g., department"
                                 required
@@ -84,7 +94,9 @@ export function OrgLevelFormDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="level-depth">Hierarchy Depth (1 = Highest)</Label>
+                        <Label htmlFor="level-depth">
+                            Hierarchy Depth (1 = Highest)
+                        </Label>
                         <Input
                             id="level-depth"
                             type="number"
@@ -104,14 +116,17 @@ export function OrgLevelFormDialog({
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label>{t('Active Status')}</Label>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-muted-foreground text-sm">
                                     {t('Is this level currently active?')}
-                                                                    </p>
+                                </p>
                             </div>
                             <Switch
                                 checked={formData.is_active}
                                 onCheckedChange={(checked: boolean) =>
-                                    onFormDataChange({ ...formData, is_active: checked })
+                                    onFormDataChange({
+                                        ...formData,
+                                        is_active: checked,
+                                    })
                                 }
                             />
                         </div>
@@ -119,14 +134,19 @@ export function OrgLevelFormDialog({
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label>{t('Leaf Node')}</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    {t('Is this the lowest level in the hierarchy?')}
-                                                                    </p>
+                                <p className="text-muted-foreground text-sm">
+                                    {t(
+                                        'Is this the lowest level in the hierarchy?',
+                                    )}
+                                </p>
                             </div>
                             <Switch
                                 checked={formData.is_leaf}
                                 onCheckedChange={(checked: boolean) =>
-                                    onFormDataChange({ ...formData, is_leaf: checked })
+                                    onFormDataChange({
+                                        ...formData,
+                                        is_leaf: checked,
+                                    })
                                 }
                             />
                         </div>
@@ -134,14 +154,19 @@ export function OrgLevelFormDialog({
                         <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <Label>{t('Workspace Owner')}</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    {t('Can units at this level own workspaces?')}
-                                                                    </p>
+                                <p className="text-muted-foreground text-sm">
+                                    {t(
+                                        'Can units at this level own workspaces?',
+                                    )}
+                                </p>
                             </div>
                             <Switch
                                 checked={formData.can_own_workspace}
                                 onCheckedChange={(checked: boolean) =>
-                                    onFormDataChange({ ...formData, can_own_workspace: checked })
+                                    onFormDataChange({
+                                        ...formData,
+                                        can_own_workspace: checked,
+                                    })
                                 }
                             />
                         </div>
@@ -154,7 +179,7 @@ export function OrgLevelFormDialog({
                             onClick={() => onOpenChange(false)}
                         >
                             {t('Cancel')}
-                                                    </Button>
+                        </Button>
                         <Button type="submit" disabled={isPending}>
                             {editingLevel ? 'Save Changes' : 'Create Level'}
                         </Button>
@@ -164,4 +189,3 @@ export function OrgLevelFormDialog({
         </Dialog>
     );
 }
-

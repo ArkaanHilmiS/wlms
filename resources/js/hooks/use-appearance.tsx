@@ -46,7 +46,8 @@ const getStoredIconSize = (): IconSize => {
         return 'md';
     }
 
-    const stored = (localStorage.getItem('icon_size') || localStorage.getItem('wlms_projects_icon_size')) as IconSize;
+    const stored = (localStorage.getItem('icon_size') ||
+        localStorage.getItem('wlms_projects_icon_size')) as IconSize;
     if (stored && ['sm', 'md', 'lg'].includes(stored)) {
         return stored;
     }
@@ -75,7 +76,11 @@ const applyIconSize = (size: IconSize): void => {
     }
 
     document.documentElement.setAttribute('data-icon-size', size);
-    document.documentElement.classList.remove('icon-size-sm', 'icon-size-md', 'icon-size-lg');
+    document.documentElement.classList.remove(
+        'icon-size-sm',
+        'icon-size-md',
+        'icon-size-lg',
+    );
     document.documentElement.classList.add(`icon-size-${size}`);
 };
 
@@ -98,7 +103,10 @@ const mediaQuery = (): MediaQueryList | null => {
 const handleSystemThemeChange = (): void => applyTheme(currentAppearance);
 
 const handleStorageChange = (e: StorageEvent): void => {
-    if ((e.key === 'icon_size' || e.key === 'wlms_projects_icon_size') && e.newValue) {
+    if (
+        (e.key === 'icon_size' || e.key === 'wlms_projects_icon_size') &&
+        e.newValue
+    ) {
         if (['sm', 'md', 'lg'].includes(e.newValue)) {
             currentIconSize = e.newValue as IconSize;
             applyIconSize(currentIconSize);
@@ -183,7 +191,13 @@ export function useAppearance(): UseAppearanceReturn {
         notify();
     };
 
-    return { appearance, resolvedAppearance, updateAppearance, iconSize, updateIconSize } as const;
+    return {
+        appearance,
+        resolvedAppearance,
+        updateAppearance,
+        iconSize,
+        updateIconSize,
+    } as const;
 }
 
 export function useIconSize(): {

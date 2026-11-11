@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import { Activity } from 'lucide-react';
 import { format } from 'date-fns';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface ProjectActivitySheetProps {
     projectId: string;
@@ -32,12 +32,18 @@ interface ActivityItem {
     created_at: string;
 }
 
-export const ProjectActivitySheet: React.FC<ProjectActivitySheetProps> = ({ projectId, isOpen, onClose }) => {
+export const ProjectActivitySheet: React.FC<ProjectActivitySheetProps> = ({
+    projectId,
+    isOpen,
+    onClose,
+}) => {
     const { t } = useTranslate();
     const { data: activities = [], isLoading } = useQuery<ActivityItem[]>({
         queryKey: ['projects', projectId, 'activity'],
         queryFn: async () => {
-            const { data } = await axios.get(`/api/projects/${projectId}/activity`);
+            const { data } = await axios.get(
+                `/api/projects/${projectId}/activity`,
+            );
             return data.data || data;
         },
         enabled: isOpen && !!projectId,
@@ -45,32 +51,51 @@ export const ProjectActivitySheet: React.FC<ProjectActivitySheetProps> = ({ proj
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+            <SheetContent className="w-full overflow-y-auto sm:max-w-md">
                 <SheetHeader className="mb-6">
                     <SheetTitle className="flex items-center gap-2">
                         <Activity className="h-5 w-5" />
                         {t('Activity History')}
-                                            </SheetTitle>
+                    </SheetTitle>
                     <SheetDescription>
                         {t('Recent activities in this project.')}
-                                            </SheetDescription>
+                    </SheetDescription>
                 </SheetHeader>
 
                 <div className="space-y-4 p-6">
                     {isLoading ? (
-                        <div className="text-sm text-muted-foreground text-center py-4">{t('Loading activities...')}</div>
+                        <div className="text-muted-foreground py-4 text-center text-sm">
+                            {t('Loading activities...')}
+                        </div>
                     ) : activities.length === 0 ? (
-                        <div className="text-sm text-muted-foreground text-center py-4">{t('No activities found.')}</div>
+                        <div className="text-muted-foreground py-4 text-center text-sm">
+                            {t('No activities found.')}
+                        </div>
                     ) : (
                         activities.map((activity) => (
-                            <div key={activity.id} className="flex flex-col space-y-1 p-3 bg-muted/40 rounded-lg border">
+                            <div
+                                key={activity.id}
+                                className="bg-muted/40 flex flex-col space-y-1 rounded-lg border p-3"
+                            >
                                 <p className="text-sm">
-                                    <span className="font-medium">{activity.actor?.name || 'System'}</span>{' '}
-                                    {activity.field_changed === 'status_id' ? 'mengubah status' : activity.field_changed === 'assignee_id' ? 'mengubah penugasan' : 'memperbarui'} 
-                                    <span className="font-medium ml-1">"{activity.issue_title}"</span>
+                                    <span className="font-medium">
+                                        {activity.actor?.name || 'System'}
+                                    </span>{' '}
+                                    {activity.field_changed === 'status_id'
+                                        ? 'mengubah status'
+                                        : activity.field_changed ===
+                                            'assignee_id'
+                                          ? 'mengubah penugasan'
+                                          : 'memperbarui'}
+                                    <span className="ml-1 font-medium">
+                                        "{activity.issue_title}"
+                                    </span>
                                 </p>
-                                <span className="text-xs text-muted-foreground">
-                                    {format(new Date(activity.created_at), 'MMM d, yyyy HH:mm')}
+                                <span className="text-muted-foreground text-xs">
+                                    {format(
+                                        new Date(activity.created_at),
+                                        'MMM d, yyyy HH:mm',
+                                    )}
                                 </span>
                             </div>
                         ))

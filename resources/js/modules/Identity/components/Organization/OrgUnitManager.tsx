@@ -13,7 +13,7 @@ import { useOrgLevels } from '../../hooks/use-org-levels';
 import { OrgUnitTree } from './OrgUnitTree';
 import { OrgUnitFormDialog, OrgUnitFormData } from './OrgUnitFormDialog';
 import { toast } from 'sonner';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 const DEFAULT_FORM_DATA: OrgUnitFormData = {
     name: '',
@@ -21,6 +21,7 @@ const DEFAULT_FORM_DATA: OrgUnitFormData = {
     parent_id: '',
     org_level_id: '',
     is_active: true,
+    max_workspaces: 0,
 };
 
 const flattenUnits = (
@@ -64,7 +65,8 @@ export function OrgUnitManager({ createTrigger = 0 }: OrgUnitManagerProps) {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState<OrgUnit | null>(null);
-    const [formData, setFormData] = useState<OrgUnitFormData>(DEFAULT_FORM_DATA);
+    const [formData, setFormData] =
+        useState<OrgUnitFormData>(DEFAULT_FORM_DATA);
 
     const openCreateDialog = () => {
         setEditingUnit(null);
@@ -86,6 +88,7 @@ export function OrgUnitManager({ createTrigger = 0 }: OrgUnitManagerProps) {
             parent_id: unit.parent_id ?? '',
             org_level_id: unit.org_level_id,
             is_active: unit.is_active,
+            max_workspaces: unit.max_workspaces ?? 0,
         });
         setIsDialogOpen(true);
     };
@@ -107,6 +110,7 @@ export function OrgUnitManager({ createTrigger = 0 }: OrgUnitManagerProps) {
             org_level_id: formData.org_level_id,
             parent_id: formData.parent_id || null,
             is_active: formData.is_active,
+            max_workspaces: formData.max_workspaces,
         };
 
         if (editingUnit) {
@@ -141,10 +145,16 @@ export function OrgUnitManager({ createTrigger = 0 }: OrgUnitManagerProps) {
         <div className="space-y-4">
             {isLoadingUnits ? (
                 <div className="flex h-32 items-center justify-center rounded-md border">
-                    <span className="text-sm text-muted-foreground">{t('Loading units...')}</span>
+                    <span className="text-muted-foreground text-sm">
+                        {t('Loading units...')}
+                    </span>
                 </div>
             ) : (
-                <OrgUnitTree units={units} onEdit={openEditDialog} onDelete={handleDelete} />
+                <OrgUnitTree
+                    units={units}
+                    onEdit={openEditDialog}
+                    onDelete={handleDelete}
+                />
             )}
 
             <OrgUnitFormDialog

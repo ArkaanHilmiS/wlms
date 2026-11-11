@@ -1,6 +1,6 @@
 import { useIssueTimeline } from '@/hooks/collaboration/use-issue-timeline';
 import { Spinner } from '@/components/ui/spinner';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 type Props = {
     issueId: string;
@@ -19,11 +19,17 @@ export function IssueTimeline({ issueId }: Props) {
     }
 
     if (error) {
-        return <div className="text-red-500">{t('Failed to load timeline')}</div>;
+        return (
+            <div className="text-red-500">{t('Failed to load timeline')}</div>
+        );
     }
 
     if (!timeline || timeline.length === 0) {
-        return <div className="text-muted-foreground p-4 text-center text-sm">{t('No activity yet.')}</div>;
+        return (
+            <div className="text-muted-foreground p-4 text-center text-sm">
+                {t('No activity yet.')}
+            </div>
+        );
     }
 
     const formatTime = (dateString: string) => {
@@ -36,25 +42,33 @@ export function IssueTimeline({ issueId }: Props) {
     return (
         <div className="space-y-4">
             {timeline.map((item) => (
-                <div key={item.id} className="flex gap-4 p-4 border rounded-md">
+                <div key={item.id} className="flex gap-4 rounded-md border p-4">
                     <div className="flex-1">
                         {item.type === 'comment' ? (
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="font-semibold text-sm">{t('User')} {item.actorId}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-sm font-semibold">
+                                        {t('User')} {item.actorId}
+                                    </span>
+                                    <span className="text-muted-foreground text-xs">
                                         {formatTime(item.createdAt)}
                                     </span>
                                 </div>
-                                <div className="text-sm whitespace-pre-wrap">{item.payload.body}</div>
+                                <div className="text-sm whitespace-pre-wrap">
+                                    {item.payload.body}
+                                </div>
                             </div>
                         ) : (
-                            <div className="flex justify-between items-center">
+                            <div className="flex items-center justify-between">
                                 <span className="text-sm">
-                                    <span className="font-medium">{t('User')} {item.actorId}</span>{' '}
-                                    <span className="text-muted-foreground">{item.payload.event}</span>
+                                    <span className="font-medium">
+                                        {t('User')} {item.actorId}
+                                    </span>{' '}
+                                    <span className="text-muted-foreground">
+                                        {item.payload.event}
+                                    </span>
                                 </span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-muted-foreground text-xs">
                                     {formatTime(item.createdAt)}
                                 </span>
                             </div>
@@ -65,4 +79,3 @@ export function IssueTimeline({ issueId }: Props) {
         </div>
     );
 }
-

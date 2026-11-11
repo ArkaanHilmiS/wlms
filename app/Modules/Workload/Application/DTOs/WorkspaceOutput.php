@@ -13,6 +13,8 @@ final class WorkspaceOutput
         public readonly string $name,
         public readonly string $status,
         public readonly string $ownerGroupId,
+        public readonly ?string $ownerGroupName = null,
+        public readonly ?string $ownerGroupCode = null,
         // Kita tidak expose deleted_at atau field internal lainnya
     ) {}
 

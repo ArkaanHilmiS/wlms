@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -16,7 +17,7 @@ class RoleController extends Controller
 {
     public function index(): JsonResponse
     {
-        $roles = RoleModel::with(['permissions', 'menus'])->get();
+        $roles = RoleModel::with(['permissions', 'menus'])->limit(500)->get();
 
         return response()->json(['data' => $roles]);
     }
@@ -50,6 +51,10 @@ class RoleController extends Controller
     {
         $role = RoleModel::findOrFail($id);
 
+        if (strtolower($role->name) === 'superadmin' && strtolower((string) ($request->input('name') ?? '')) !== 'superadmin') {
+            return response()->json(['message' => 'Cannot rename Superadmin system role.'], 422);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:50|unique:roles,name,'.$role->id,
             'scope' => 'required|string|in:GLOBAL,WORKSPACE,PROJECT',
@@ -65,6 +70,10 @@ class RoleController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $role = RoleModel::findOrFail($id);
+
+        if (strtolower($role->name) === 'superadmin') {
+            return response()->json(['message' => 'Cannot delete Superadmin system role.'], 422);
+        }
 
         DB::transaction(function () use ($role) {
             $role->permissions()->detach();
@@ -90,7 +99,9 @@ class RoleController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validasi gagal', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal sync permissions', 'error' => $e->getMessage()], 500);
+            Log::error("Failed to sync permissions for role {$id}: ".$e->getMessage());
+
+            return response()->json(['message' => 'Gagal sync permissions.'], 500);
         }
     }
 
@@ -108,7 +119,9 @@ class RoleController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validasi gagal', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal sync menus', 'error' => $e->getMessage()], 500);
+            Log::error("Failed to sync menus for role {$id}: ".$e->getMessage());
+
+            return response()->json(['message' => 'Gagal sync menus.'], 500);
         }
     }
 }

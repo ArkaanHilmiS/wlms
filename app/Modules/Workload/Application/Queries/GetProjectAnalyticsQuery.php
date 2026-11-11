@@ -10,6 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class GetProjectAnalyticsQuery
 {
@@ -86,6 +87,7 @@ final class GetProjectAnalyticsQuery
                     'completed_issues' => 0,
                     'in_progress_issues' => 0,
                     'todo_issues' => 0,
+                    'overdue_issues' => 0,
                     'completion_rate' => 0.0,
                 ],
                 leadTime: $this->emptyLeadTime(),
@@ -95,6 +97,7 @@ final class GetProjectAnalyticsQuery
                 priorities: [],
                 sprintMetrics: [
                     'has_sprints' => false,
+                    'mode' => 'non_sprint',
                     'burndown' => [],
                     'velocity' => [],
                 ],
@@ -107,19 +110,36 @@ final class GetProjectAnalyticsQuery
         $completedIssues = $issueRows->filter(function (\stdClass $i): bool {
             $cat = strtoupper((string) ($i->status_category ?? ''));
             $slug = strtolower((string) ($i->status_slug ?? ''));
+
             return $cat === 'DONE' || $slug === 'done';
         });
 
         $inProgressIssues = $issueRows->filter(function (\stdClass $i): bool {
             $cat = strtoupper((string) ($i->status_category ?? ''));
             $slug = strtolower((string) ($i->status_slug ?? ''));
+
             return $cat === 'IN_PROGRESS' || str_contains($slug, 'progress');
         });
 
         $todoIssues = $issueRows->filter(function (\stdClass $i): bool {
             $cat = strtoupper((string) ($i->status_category ?? ''));
             $slug = strtolower((string) ($i->status_slug ?? ''));
+
             return $cat === 'TODO' || $slug === 'todo' || $slug === 'to-do';
+        });
+
+        $todayStr = CarbonImmutable::now()->toDateString();
+        $overdueIssues = $issueRows->filter(function (\stdClass $i) use ($todayStr): bool {
+            if (! $i->due_date) {
+                return false;
+            }
+            $cat = strtoupper((string) ($i->status_category ?? ''));
+            $slug = strtolower((string) ($i->status_slug ?? ''));
+            if ($cat === 'DONE' || $slug === 'done') {
+                return false;
+            }
+
+            return substr((string) $i->due_date, 0, 10) < $todayStr;
         });
 
         $summary = [
@@ -127,6 +147,7 @@ final class GetProjectAnalyticsQuery
             'completed_issues' => $completedIssues->count(),
             'in_progress_issues' => $inProgressIssues->count(),
             'todo_issues' => $todoIssues->count(),
+            'overdue_issues' => $overdueIssues->count(),
             'completion_rate' => $totalIssues > 0 ? round(($completedIssues->count() / $totalIssues) * 100.0, 1) : 0.0,
         ];
 
@@ -158,7 +179,13 @@ final class GetProjectAnalyticsQuery
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $sprintMetrics = $this->aggregateSprintMetrics($sprintRows, $input->sprintId, $issueRows);
+        $sprintMetrics = $this->aggregateSprintMetrics(
+            $sprintRows,
+            $input->sprintId,
+            $issueRows,
+            $startDate,
+            $endDate
+        );
 
         return new ProjectAnalyticsOutput(
             project: [
@@ -200,8 +227,8 @@ final class GetProjectAnalyticsQuery
                 if ($start->lte($end)) {
                     return [$start, $end, 'custom'];
                 }
-            } catch (\Throwable) {
-                // fallback to 30d
+            } catch (\Throwable $e) {
+                Log::debug("Project analytics date range parse failed for from: '{$from}', to: '{$to}': ".$e->getMessage());
             }
         }
 
@@ -227,8 +254,8 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $completedIssues
-     * @param Collection<string, Collection<int, \stdClass>> $historyRows
+     * @param  Collection<int, \stdClass>  $completedIssues
+     * @param  Collection<string, Collection<int, \stdClass>>  $historyRows
      * @return array<string, mixed>
      */
     private function calculateLeadTime(Collection $completedIssues, Collection $historyRows): array
@@ -280,8 +307,8 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $completedIssues
-     * @param Collection<string, Collection<int, \stdClass>> $historyRows
+     * @param  Collection<int, \stdClass>  $completedIssues
+     * @param  Collection<string, Collection<int, \stdClass>>  $historyRows
      * @return array<string, mixed>
      */
     private function calculateCycleTime(Collection $completedIssues, Collection $historyRows): array
@@ -345,7 +372,7 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $issues
+     * @param  Collection<int, \stdClass>  $issues
      * @return array<int, array<string, mixed>>
      */
     private function generateCumulativeFlow(
@@ -411,7 +438,7 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $issues
+     * @param  Collection<int, \stdClass>  $issues
      * @return array<int, array<string, mixed>>
      */
     private function aggregateIssueTypesBreakdown(Collection $issues): array
@@ -445,7 +472,7 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $issues
+     * @param  Collection<int, \stdClass>  $issues
      * @return array<int, array<string, mixed>>
      */
     private function aggregatePrioritiesBreakdown(Collection $issues): array
@@ -480,20 +507,90 @@ final class GetProjectAnalyticsQuery
     }
 
     /**
-     * @param Collection<int, \stdClass> $sprintRows
-     * @param Collection<int, \stdClass> $issues
+     * @param  Collection<int, \stdClass>  $sprintRows
+     * @param  Collection<int, \stdClass>  $issues
      * @return array<string, mixed>
      */
     private function aggregateSprintMetrics(
         Collection $sprintRows,
         ?string $selectedSprintId,
-        Collection $issues
+        Collection $issues,
+        CarbonImmutable $startDate,
+        CarbonImmutable $endDate
     ): array {
-        if ($sprintRows->isEmpty()) {
+        $pointOf = static fn (\stdClass $i): int => max(1, (int) ($i->story_points ?? 0));
+        $isIssueDone = static function (\stdClass $i): bool {
+            $cat = strtoupper((string) ($i->status_category ?? ''));
+            $slug = strtolower((string) ($i->status_slug ?? ''));
+
+            return $cat === 'DONE' || $slug === 'done';
+        };
+
+        if ($sprintRows->isEmpty() || $selectedSprintId === 'non_sprint') {
+            $totalScope = (int) $issues->sum($pointOf);
+            $durationDays = max(1, (int) $startDate->diffInDays($endDate));
+            $steps = min(10, $durationDays);
+            $stepDays = max(1, (int) floor($durationDays / $steps));
+
+            $burndown = [];
+            for ($step = 0; $step <= $steps; $step++) {
+                $dayIndex = min($durationDays, $step * $stepDays);
+                $pointDate = $startDate->addDays($dayIndex)->endOfDay();
+
+                $doneByDate = (int) $issues
+                    ->filter(function (\stdClass $i) use ($isIssueDone, $pointDate): bool {
+                        if (! $isIssueDone($i)) {
+                            return false;
+                        }
+
+                        return CarbonImmutable::parse((string) $i->updated_at)->lte($pointDate);
+                    })
+                    ->sum($pointOf);
+
+                $ideal = round($totalScope - ($totalScope / $durationDays) * $dayIndex, 1);
+                $actual = max(0, $totalScope - $doneByDate);
+
+                $burndown[] = [
+                    'day' => $pointDate->format('M d'),
+                    'ideal_points' => max(0.0, $ideal),
+                    'actual_points' => (float) $actual,
+                ];
+            }
+
+            $velocity = [];
+            $weekStart = $startDate->startOfWeek();
+            $weekNum = 1;
+            $weeklyTarget = max(1, (int) ceil($totalScope / max(1.0, ceil($durationDays / 7.0))));
+            while ($weekStart->lte($endDate) && $weekNum <= 8) {
+                $weekEnd = $weekStart->endOfWeek();
+
+                $completedInWeek = (int) $issues
+                    ->filter(function (\stdClass $i) use ($isIssueDone, $weekStart, $weekEnd): bool {
+                        if (! $isIssueDone($i)) {
+                            return false;
+                        }
+                        $updated = CarbonImmutable::parse((string) $i->updated_at);
+
+                        return $updated->gte($weekStart) && $updated->lte($weekEnd);
+                    })
+                    ->sum($pointOf);
+
+                $velocity[] = [
+                    'sprint_id' => 'week_'.$weekNum,
+                    'sprint_name' => $weekStart->format('M d'),
+                    'committed_points' => max($completedInWeek, $weeklyTarget),
+                    'completed_points' => $completedInWeek,
+                ];
+
+                $weekStart = $weekStart->addWeek();
+                $weekNum++;
+            }
+
             return [
-                'has_sprints' => false,
-                'burndown' => [],
-                'velocity' => [],
+                'has_sprints' => $sprintRows->isNotEmpty(),
+                'mode' => 'non_sprint',
+                'burndown' => $burndown,
+                'velocity' => $velocity,
             ];
         }
 
@@ -504,19 +601,19 @@ final class GetProjectAnalyticsQuery
             $completed = (int) $sprint->completed_points;
 
             $sprintIssues = $issues->filter(fn (\stdClass $i): bool => (string) $i->sprint_id === (string) $sprint->id);
+            $hasStoryPoints = $sprintIssues->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0)) > 0;
+            $issueWeight = $hasStoryPoints
+                ? static fn (\stdClass $i): int => (int) ($i->story_points ?? 0)
+                : static fn (\stdClass $i): int => 1;
 
             if ($completed === 0) {
                 $completed = (int) $sprintIssues
-                    ->filter(function (\stdClass $i): bool {
-                        $cat = strtoupper((string) ($i->status_category ?? ''));
-                        $slug = strtolower((string) ($i->status_slug ?? ''));
-                        return $cat === 'DONE' || $slug === 'done';
-                    })
-                    ->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0));
+                    ->filter($isIssueDone)
+                    ->sum($issueWeight);
             }
 
             if ($committed === 0) {
-                $committed = (int) $sprintIssues->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0));
+                $committed = (int) $sprintIssues->sum($issueWeight);
             }
 
             $velocity[] = [
@@ -537,10 +634,14 @@ final class GetProjectAnalyticsQuery
         $burndown = [];
         $targetSprintId = (string) $targetSprint->id;
         $sprintIssues = $issues->filter(fn (\stdClass $i): bool => (string) $i->sprint_id === $targetSprintId);
+        $hasStoryPoints = $sprintIssues->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0)) > 0;
+        $issueWeight = $hasStoryPoints
+            ? static fn (\stdClass $i): int => (int) ($i->story_points ?? 0)
+            : static fn (\stdClass $i): int => 1;
 
         $committed = (int) $targetSprint->committed_points;
         if ($committed === 0) {
-            $committed = max(10, (int) $sprintIssues->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0)));
+            $committed = max(10, (int) $sprintIssues->sum($issueWeight));
         }
 
         $sprintStart = $targetSprint->start_date ? CarbonImmutable::parse((string) $targetSprint->start_date) : CarbonImmutable::now()->subDays(10);
@@ -550,12 +651,8 @@ final class GetProjectAnalyticsQuery
         $daysPassed = min($durationDays, max(0, (int) $sprintStart->diffInDays(CarbonImmutable::now())));
 
         $completedPoints = (int) $sprintIssues
-            ->filter(function (\stdClass $i): bool {
-                $cat = strtoupper((string) ($i->status_category ?? ''));
-                $slug = strtolower((string) ($i->status_slug ?? ''));
-                return $cat === 'DONE' || $slug === 'done';
-            })
-            ->sum(fn (\stdClass $i): int => (int) ($i->story_points ?? 0));
+            ->filter($isIssueDone)
+            ->sum($issueWeight);
 
         $actualRemaining = max(0, $committed - $completedPoints);
 
@@ -574,6 +671,7 @@ final class GetProjectAnalyticsQuery
 
         return [
             'has_sprints' => true,
+            'mode' => 'sprint',
             'burndown' => $burndown,
             'velocity' => $velocity,
         ];

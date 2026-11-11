@@ -51,7 +51,10 @@ export function BarChart({
 }: BarChartProps) {
     const { iconSize } = useIconSize();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
 
     if (!data || data.length === 0) {
         return (
@@ -69,7 +72,12 @@ export function BarChart({
         {
             maxBarWidth: number;
             fontSize: string;
-            margin: { top: number; right: number; bottom: number; left: number };
+            margin: {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+            };
             rx: number;
         }
     > = {
@@ -96,7 +104,10 @@ export function BarChart({
     const config = densityConfig[iconSize];
 
     return (
-        <div className={cn('flex flex-col w-full', className)} data-slot="bar-chart">
+        <div
+            className={cn('flex w-full flex-col', className)}
+            data-slot="bar-chart"
+        >
             <ResponsiveContainer
                 height={height}
                 densityHeight={densityHeight}
@@ -105,11 +116,13 @@ export function BarChart({
                 {({ width, height: containerHeight }) => {
                     const plotWidth = Math.max(
                         0,
-                        width - config.margin.left - config.margin.right
+                        width - config.margin.left - config.margin.right,
                     );
                     const plotHeight = Math.max(
                         0,
-                        containerHeight - config.margin.top - config.margin.bottom
+                        containerHeight -
+                            config.margin.top -
+                            config.margin.bottom,
                     );
 
                     const values = data.map((d) => Number(d[dataKey]) || 0);
@@ -123,20 +136,25 @@ export function BarChart({
                         if (val <= 20) return 20;
                         if (val <= 50) return 50;
                         if (val <= 100) return 100;
-                        const factor = Math.pow(10, Math.floor(Math.log10(val)));
+                        const factor = Math.pow(
+                            10,
+                            Math.floor(Math.log10(val)),
+                        );
                         return Math.ceil(val / factor) * factor;
                     };
 
                     const maxVal = getNiceCeiling(rawMax);
                     const tickCount = 4;
-                    const yTicks = Array.from({ length: tickCount + 1 }, (_, i) =>
-                        Math.round((maxVal / tickCount) * i)
+                    const yTicks = Array.from(
+                        { length: tickCount + 1 },
+                        (_, i) => Math.round((maxVal / tickCount) * i),
                     );
 
-                    const slotWidth = data.length > 0 ? plotWidth / data.length : 0;
+                    const slotWidth =
+                        data.length > 0 ? plotWidth / data.length : 0;
                     const barWidth = Math.max(
                         4,
-                        Math.min(slotWidth * 0.65, config.maxBarWidth)
+                        Math.min(slotWidth * 0.65, config.maxBarWidth),
                     );
 
                     const activeItem =
@@ -148,7 +166,9 @@ export function BarChart({
                         ? [
                               {
                                   label: legendLabel || String(dataKey),
-                                  value: valueFormatter(Number(activeItem[dataKey]) || 0),
+                                  value: valueFormatter(
+                                      Number(activeItem[dataKey]) || 0,
+                                  ),
                                   color: activeItem.color || barColor,
                               },
                           ]
@@ -156,7 +176,7 @@ export function BarChart({
 
                     return (
                         <div
-                            className="relative w-full h-full"
+                            className="relative h-full w-full"
                             onMouseLeave={() => setHoveredIndex(null)}
                         >
                             <svg
@@ -173,8 +193,16 @@ export function BarChart({
                                         x2="0"
                                         y2="1"
                                     >
-                                        <stop offset="0%" stopColor="white" stopOpacity="0.25" />
-                                        <stop offset="100%" stopColor="white" stopOpacity="0" />
+                                        <stop
+                                            offset="0%"
+                                            stopColor="white"
+                                            stopOpacity="0.25"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stopColor="white"
+                                            stopOpacity="0"
+                                        />
                                     </linearGradient>
                                 </defs>
 
@@ -190,14 +218,21 @@ export function BarChart({
                                                 <line
                                                     x1={config.margin.left}
                                                     y1={yPos}
-                                                    x2={config.margin.left + plotWidth}
+                                                    x2={
+                                                        config.margin.left +
+                                                        plotWidth
+                                                    }
                                                     y2={yPos}
                                                     stroke="currentColor"
-                                                    strokeDasharray={i === 0 ? undefined : '3 3'}
+                                                    strokeDasharray={
+                                                        i === 0
+                                                            ? undefined
+                                                            : '3 3'
+                                                    }
                                                     className={cn(
                                                         i === 0
                                                             ? 'text-border stroke-[1.5]'
-                                                            : 'text-border/40 stroke-1'
+                                                            : 'text-border/40 stroke-1',
                                                     )}
                                                 />
                                                 <text
@@ -206,7 +241,10 @@ export function BarChart({
                                                     textAnchor="end"
                                                     fill="currentColor"
                                                     className="text-muted-foreground font-mono"
-                                                    style={{ fontSize: config.fontSize }}
+                                                    style={{
+                                                        fontSize:
+                                                            config.fontSize,
+                                                    }}
                                                 >
                                                     {tickVal}
                                                 </text>
@@ -218,24 +256,31 @@ export function BarChart({
                                 {data.map((item, idx) => {
                                     const val = Number(item[dataKey]) || 0;
                                     const barHeight =
-                                        maxVal > 0 ? (val / maxVal) * plotHeight : 0;
+                                        maxVal > 0
+                                            ? (val / maxVal) * plotHeight
+                                            : 0;
                                     const xPos =
                                         config.margin.left +
                                         idx * slotWidth +
                                         (slotWidth - barWidth) / 2;
                                     const yPos =
-                                        config.margin.top + (plotHeight - barHeight);
+                                        config.margin.top +
+                                        (plotHeight - barHeight);
                                     const isHovered = hoveredIndex === idx;
-                                    const currentBarColor = item.color || barColor;
+                                    const currentBarColor =
+                                        item.color || barColor;
 
                                     return (
                                         <g
                                             key={`bar-${idx}`}
-                                            className="transition-all duration-150 cursor-pointer"
-                                            onClick={() => onBarClick?.(item, idx)}
+                                            className="cursor-pointer transition-all duration-150"
+                                            onClick={() =>
+                                                onBarClick?.(item, idx)
+                                            }
                                             onMouseEnter={(e) => {
                                                 setHoveredIndex(idx);
-                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                const rect =
+                                                    e.currentTarget.getBoundingClientRect();
                                                 setMousePos({
                                                     x: xPos + barWidth / 2,
                                                     y: Math.max(10, yPos),
@@ -251,7 +296,10 @@ export function BarChart({
                                             {/* Hover indicator background column */}
                                             {isHovered && (
                                                 <rect
-                                                    x={config.margin.left + idx * slotWidth}
+                                                    x={
+                                                        config.margin.left +
+                                                        idx * slotWidth
+                                                    }
                                                     y={config.margin.top}
                                                     width={slotWidth}
                                                     height={plotHeight}
@@ -271,8 +319,8 @@ export function BarChart({
                                                 className={cn(
                                                     'transition-all duration-150',
                                                     isHovered
-                                                        ? 'brightness-110 filter drop-shadow-xs'
-                                                        : 'opacity-95'
+                                                        ? 'brightness-110 drop-shadow-xs filter'
+                                                        : 'opacity-95',
                                                 )}
                                             />
 
@@ -292,16 +340,22 @@ export function BarChart({
                                             {/* X-axis Label */}
                                             <text
                                                 x={xPos + barWidth / 2}
-                                                y={config.margin.top + plotHeight + 16}
+                                                y={
+                                                    config.margin.top +
+                                                    plotHeight +
+                                                    16
+                                                }
                                                 textAnchor="middle"
                                                 fill="currentColor"
                                                 className={cn(
                                                     'font-medium transition-colors',
                                                     isHovered
                                                         ? 'text-foreground font-semibold'
-                                                        : 'text-muted-foreground'
+                                                        : 'text-muted-foreground',
                                                 )}
-                                                style={{ fontSize: config.fontSize }}
+                                                style={{
+                                                    fontSize: config.fontSize,
+                                                }}
                                             >
                                                 {String(item[xKey] ?? '')}
                                             </text>
@@ -312,7 +366,12 @@ export function BarChart({
                                 {/* Optional Y Axis Label */}
                                 {yAxisLabel && (
                                     <text
-                                        x={-(config.margin.top + plotHeight / 2)}
+                                        x={
+                                            -(
+                                                config.margin.top +
+                                                plotHeight / 2
+                                            )
+                                        }
                                         y={12}
                                         transform="rotate(-90)"
                                         textAnchor="middle"
@@ -343,7 +402,11 @@ export function BarChart({
                                     active={hoveredIndex !== null}
                                     x={mousePos.x}
                                     y={mousePos.y}
-                                    title={activeItem ? String(activeItem[xKey]) : undefined}
+                                    title={
+                                        activeItem
+                                            ? String(activeItem[xKey])
+                                            : undefined
+                                    }
                                     items={tooltipItems}
                                     containerWidth={width}
                                     containerHeight={containerHeight}

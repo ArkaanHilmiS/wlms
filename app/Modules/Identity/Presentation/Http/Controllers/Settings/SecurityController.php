@@ -6,6 +6,9 @@ use App\Modules\Identity\Presentation\Http\Requests\Settings\PasswordUpdateReque
 use App\Modules\Identity\Presentation\Http\Requests\Settings\TwoFactorAuthenticationRequest;
 use App\Shared\Presentation\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -58,6 +61,15 @@ class SecurityController extends Controller
         $request->user()->update([
             'password' => $request->password,
         ]);
+
+        Auth::logoutOtherDevices($request->password);
+
+        if (Schema::hasTable('sessions')) {
+            DB::table('sessions')
+                ->where('user_id', $request->user()->getAuthIdentifier())
+                ->where('id', '!=', (string) $request->session()->getId())
+                ->delete();
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Password updated.')]);
 

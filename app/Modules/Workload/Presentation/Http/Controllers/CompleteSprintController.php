@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Controllers;
 
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Application\UseCases\CompleteSprintUseCase;
 use App\Modules\Workload\Domain\Events\SprintStateChanged;
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\SprintModel;
@@ -20,7 +21,16 @@ final class CompleteSprintController
 
     public function __invoke(string $id, Request $request): JsonResponse
     {
-        if (! ($request->user()?->hasRole('Workspace Owner') || $request->user()?->hasRole('Superadmin'))) {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $targetSprint = SprintModel::select('id', 'project_id', 'name')->find($id);
+        if ($targetSprint && ! WorkloadAccessChecker::canManageSprint($user->id, (string) $targetSprint->project_id, 'sprints:complete')) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+        if (! $targetSprint && ! WorkloadAccessChecker::isSuperAdmin($user->id)) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 

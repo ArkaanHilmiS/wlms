@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\WorkspaceModel;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\DB;
 
 final class GetWorkspaceAnalyticsHttpRequest extends FormRequest
 {
@@ -27,39 +27,21 @@ final class GetWorkspaceAnalyticsHttpRequest extends FormRequest
             abort(404, 'Workspace not found.');
         }
 
-        // 1. Superadmin check
-        if ($user->email === 'superadmin@wlms.com') {
+        if (WorkloadAccessChecker::canManageWorkspace($user->id, $workspaceId, $workspace)) {
             return true;
         }
 
-        if ($user->hasRole('Superadmin')) {
-            return true;
+        if (
+            $user->hasPermission('analytics:view')
+            || $user->hasPermission('workspaces:manage')
+            || $user->hasPermission('analytics:view', 'WORKSPACE', $workspaceId)
+            || $user->hasPermission('workspaces:manage', 'WORKSPACE', $workspaceId)
+        ) {
+            return WorkloadAccessChecker::canViewWorkspace($user->id, $workspaceId)
+                || $user->can('view', $workspace);
         }
 
-        $isSuperadmin = DB::table('user_roles')
-            ->join('roles', 'user_roles.role_id', '=', 'roles.id')
-            ->where('user_roles.user_id', $user->id)
-            ->where('roles.name', 'Superadmin')
-            ->exists();
-        if ($isSuperadmin) {
-            return true;
-        }
-
-        // 2. Owner group / internal member
-        if ($user->org_unit_id && $user->org_unit_id === $workspace->owner_group_id) {
-            return true;
-        }
-
-        // 3. Workspace Policy check
-        if ($user->can('view', $workspace)) {
-            return true;
-        }
-
-        // 4. Workspace membership check
-        return DB::table('workspace_members')
-            ->where('workspace_id', $workspace->id)
-            ->where('user_id', $user->id)
-            ->exists();
+        return false;
     }
 
     /**

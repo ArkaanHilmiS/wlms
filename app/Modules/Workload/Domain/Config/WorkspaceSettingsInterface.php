@@ -6,5 +6,5 @@ namespace App\Modules\Workload\Domain\Config;
 
 interface WorkspaceSettingsInterface
 {
-    public function getMaxWorkspacesPerGroup(): int;
+    public function getMaxWorkspacesPerGroup(?string $groupId = null): int;
 }

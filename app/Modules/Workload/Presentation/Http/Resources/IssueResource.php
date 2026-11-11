@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Presentation\Http\Resources;
 
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\IssueModel;
+use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\StatusModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 /**
  * @mixin IssueModel
@@ -18,9 +20,18 @@ class IssueResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $statusCategory = $this->relationLoaded('status')
+            ? $this->status?->category
+            : ($this->status_id ? StatusModel::query()->where('id', $this->status_id)->value('category') : null);
+
+        $isOverdue = $this->due_date !== null
+            && Carbon::parse($this->due_date)->startOfDay()->lt(now()->startOfDay())
+            && strtoupper((string) $statusCategory) !== 'DONE';
+
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
+            ...$this->linkStats(),
             'number' => $this->number,
             'title' => $this->title,
             'description' => $this->description,
@@ -33,6 +44,9 @@ class IssueResource extends JsonResource
             'story_points' => $this->story_points,
             'original_estimate_seconds' => $this->original_estimate_seconds,
             'remaining_estimate_seconds' => $this->remaining_estimate_seconds,
+            'start_date' => $this->start_date ? Carbon::parse($this->start_date)->format('Y-m-d') : null,
+            'due_date' => $this->due_date ? Carbon::parse($this->due_date)->format('Y-m-d') : null,
+            'is_overdue' => $isOverdue,
             'created_at' => $this->created_at,
 
             'assignee' => $this->whenLoaded('assignee', function () {

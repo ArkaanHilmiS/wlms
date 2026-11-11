@@ -25,7 +25,7 @@ final class CreateWorkspaceUseCase
         $this->ensureUserCanCreateWorkspaceInGroup($input->actorUserId, $input->ownerGroupId);
 
         // 2. Dynamic Config Check: Max Workspaces per Group
-        $limit = $this->settings->getMaxWorkspacesPerGroup();
+        $limit = $this->settings->getMaxWorkspacesPerGroup($input->ownerGroupId);
         $currentCount = $this->repository->countByGroupId($input->ownerGroupId);
 
         if ($currentCount >= $limit) {

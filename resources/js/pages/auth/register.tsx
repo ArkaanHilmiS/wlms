@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 type Props = {
     passwordRules: string;
@@ -47,7 +47,9 @@ export default function Register({ passwordRules }: Props) {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">{t('Email address')}</Label>
+                                <Label htmlFor="email">
+                                    {t('Email address')}
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -61,7 +63,9 @@ export default function Register({ passwordRules }: Props) {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">{t('Password')}</Label>
+                                <Label htmlFor="password">
+                                    {t('Password')}
+                                </Label>
                                 <PasswordInput
                                     id="password"
                                     required
@@ -77,7 +81,7 @@ export default function Register({ passwordRules }: Props) {
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">
                                     {t('Confirm password')}
-                                                                    </Label>
+                                </Label>
                                 <PasswordInput
                                     id="password_confirmation"
                                     required
@@ -100,7 +104,7 @@ export default function Register({ passwordRules }: Props) {
                             >
                                 {processing && <Spinner />}
                                 {t('Create account')}
-                                                            </Button>
+                            </Button>
                         </div>
 
                         <div className="text-muted-foreground text-center text-sm">
@@ -111,7 +115,7 @@ export default function Register({ passwordRules }: Props) {
                                 tabIndex={6}
                             >
                                 {t('Log in')}
-                                                            </TextLink>
+                            </TextLink>
                         </div>
                     </>
                 )}

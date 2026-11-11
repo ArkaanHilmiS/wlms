@@ -10,8 +10,7 @@ class PermissionController extends Controller
 {
     public function index(): JsonResponse
     {
-        // Get all permissions grouped by resource or simply list them
-        $permissions = PermissionModel::orderBy('group')->orderBy('name')->get();
+        $permissions = PermissionModel::orderBy('name')->get();
 
         return response()->json(['data' => $permissions]);
     }

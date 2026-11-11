@@ -11,11 +11,18 @@ export function useAddComment() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ issueId, body, parentId }: AddCommentVariables) => {
-            const { data } = await axios.post(`/api/issues/${issueId}/comments`, {
-                body,
-                parent_id: parentId,
-            });
+        mutationFn: async ({
+            issueId,
+            body,
+            parentId,
+        }: AddCommentVariables) => {
+            const { data } = await axios.post(
+                `/api/issues/${issueId}/comments`,
+                {
+                    body,
+                    parent_id: parentId,
+                },
+            );
             return data;
         },
         onSuccess: (_, variables) => {
@@ -25,4 +32,3 @@ export function useAddComment() {
         },
     });
 }
-

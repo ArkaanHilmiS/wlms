@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAddComment } from '@/hooks/collaboration/use-add-comment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 type Props = {
     issueId: string;
@@ -26,7 +26,7 @@ export function CommentBox({ issueId, parentId, onSuccess }: Props) {
                     setBody('');
                     if (onSuccess) onSuccess();
                 },
-            }
+            },
         );
     };
 
@@ -35,7 +35,9 @@ export function CommentBox({ issueId, parentId, onSuccess }: Props) {
             <Textarea
                 placeholder={t('Leave a comment...')}
                 value={body}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBody(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setBody(e.target.value)
+                }
                 disabled={isPending}
                 rows={3}
             />
@@ -47,4 +49,3 @@ export function CommentBox({ issueId, parentId, onSuccess }: Props) {
         </form>
     );
 }
-

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 
@@ -11,7 +12,17 @@ final class CreateProjectHttpRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermission('projects:manage') ?? false;
+        $user = $this->user();
+        if (! $user) {
+            return false;
+        }
+
+        $workspaceId = (string) $this->input('workspace_id');
+        if ($workspaceId !== '') {
+            return WorkloadAccessChecker::canCreateProject($user->id, $workspaceId);
+        }
+
+        return $user->hasPermission('projects:create') || $user->hasPermission('projects:manage');
     }
 
     /**
@@ -24,7 +35,7 @@ final class CreateProjectHttpRequest extends FormRequest
             'key' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
-            'lead_id' => ['nullable', 'uuid'],
+            'lead_id' => ['nullable', 'exists:users,id'],
             'priority_id' => ['nullable', 'uuid', 'exists:priorities,id'],
         ];
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Workload\Infrastructure\Auth\Policies;
 
 use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\UserModel;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\WorkspaceModel;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -29,15 +30,7 @@ final class WorkspacePolicy
      */
     public function view(UserModel $user, WorkspaceModel $workspace): bool
     {
-        if ($this->isSuperadmin($user)) {
-            return true;
-        }
-
-        if ($user->org_unit_id === $workspace->owner_group_id) {
-            return true;
-        }
-
-        return $workspace->members()->where('user_id', $user->id)->exists();
+        return WorkloadAccessChecker::canViewWorkspace($user->id, $workspace->id);
     }
 
     public function create(UserModel $user): bool
@@ -52,14 +45,7 @@ final class WorkspacePolicy
      */
     public function update(UserModel $user, WorkspaceModel $workspace): bool
     {
-        // Anti-IDOR (Insecure Direct Object Reference)
-        // Hanya Superadmin atau Anggota Org Unit yang sama dengan pemilik Workspace
-        // yang diizinkan untuk mengupdate.
-        if ($this->isSuperadmin($user)) {
-            return true;
-        }
-
-        return $user->org_unit_id === $workspace->owner_group_id;
+        return WorkloadAccessChecker::canManageWorkspace($user->id, $workspace->id);
     }
 
     /**
@@ -67,23 +53,6 @@ final class WorkspacePolicy
      */
     public function delete(UserModel $user, WorkspaceModel $workspace): bool
     {
-        // Penghapusan dibatasi sangat ketat.
-        if ($this->isSuperadmin($user)) {
-            return true;
-        }
-
-        // Delegasi hak menghapus hanya jika user satu grup dengan owner Workspace.
-        return $user->org_unit_id === $workspace->owner_group_id;
-    }
-
-    /**
-     * Helper sementara untuk validasi bypass RBAC.
-     * Nantinya akan dihubungkan dengan tabel `roles` dan `permissions` secara utuh.
-     */
-    private function isSuperadmin(UserModel $user): bool
-    {
-        // Mencontohkan Anti-Enum, kita hanya cek email spesifik atau UUID superadmin,
-        // atau mengecek relasi $user->roles()->where('name', 'Superadmin')->exists();
-        return $user->email === 'superadmin@wlms.com';
+        return WorkloadAccessChecker::canManageWorkspace($user->id, $workspace->id);
     }
 }

@@ -27,6 +27,8 @@ final class WorkspaceResource extends JsonResource
             'name' => $this->name,
             'status' => $this->status,
             'owner_group_id' => $this->ownerGroupId,
+            'owner_group_name' => $this->ownerGroupName ?? null,
+            'owner_group_code' => $this->ownerGroupCode ?? null,
         ];
     }
 }

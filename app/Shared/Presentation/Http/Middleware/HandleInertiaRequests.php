@@ -52,6 +52,15 @@ class HandleInertiaRequests extends Middleware
                 if ($userRole->role) {
                     foreach ($userRole->role->permissions as $perm) {
                         $permissions[] = $perm->name;
+                        // Implied permissions untuk frontend
+                        if (str_ends_with($perm->name, ':manage')) {
+                            $module = explode(':', $perm->name)[0];
+                            $permissions[] = "{$module}:view";
+                            $permissions[] = "{$module}:create";
+                            $permissions[] = "{$module}:edit";
+                            $permissions[] = "{$module}:assign";
+                            $permissions[] = "{$module}:delete";
+                        }
                     }
                     $roles[] = $userRole->role->name;
                     foreach ($userRole->role->menus as $menu) {

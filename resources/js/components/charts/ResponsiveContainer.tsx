@@ -43,7 +43,11 @@ export function ResponsiveContainer({
         densityHeight?.[iconSize] ?? DEFAULT_DENSITY_HEIGHTS[iconSize];
 
     let computedHeight: number | string = height ?? baseDensityHeight;
-    if (minHeight && typeof computedHeight === 'number' && computedHeight < minHeight) {
+    if (
+        minHeight &&
+        typeof computedHeight === 'number' &&
+        computedHeight < minHeight
+    ) {
         computedHeight = minHeight;
     }
 
@@ -95,7 +99,10 @@ export function ResponsiveContainer({
     };
 
     const containerStyle: React.CSSProperties = {
-        height: typeof computedHeight === 'number' ? `${computedHeight}px` : computedHeight,
+        height:
+            typeof computedHeight === 'number'
+                ? `${computedHeight}px`
+                : computedHeight,
         aspectRatio: aspectRatio ? `${aspectRatio}` : undefined,
         minHeight: minHeight ? `${minHeight}px` : undefined,
         ...style,
@@ -104,7 +111,10 @@ export function ResponsiveContainer({
     return (
         <div
             ref={containerRef}
-            className={cn('relative w-full overflow-hidden select-none', className)}
+            className={cn(
+                'relative w-full overflow-hidden select-none',
+                className,
+            )}
             style={containerStyle}
             data-slot="chart-responsive-container"
             data-icon-size={iconSize}

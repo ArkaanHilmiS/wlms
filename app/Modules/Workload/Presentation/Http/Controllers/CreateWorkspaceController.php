@@ -6,6 +6,7 @@ namespace App\Modules\Workload\Presentation\Http\Controllers;
 
 use App\Modules\Workload\Application\DTOs\CreateWorkspaceInput;
 use App\Modules\Workload\Application\UseCases\CreateWorkspaceUseCase;
+use App\Modules\Workload\Domain\Exceptions\WorkspaceCreationException;
 use App\Modules\Workload\Presentation\Http\Requests\CreateWorkspaceHttpRequest;
 use App\Modules\Workload\Presentation\Http\Resources\WorkspaceResource;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +37,13 @@ final class CreateWorkspaceController extends Controller
         );
 
         // 4. Eksekusi Command
-        $output = $this->useCase->execute($input);
+        try {
+            $output = $this->useCase->execute($input);
+        } catch (WorkspaceCreationException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
 
         // 5. Response API Resource (Zero Data Breach)
         return response()->json(

@@ -8,8 +8,8 @@ use App\Modules\Workload\Domain\Repositories\IssueRepositoryInterface;
 use App\Modules\Workload\Domain\Repositories\SprintRepositoryInterface;
 use App\Modules\Workload\Domain\ValueObjects\IssueId;
 use App\Modules\Workload\Domain\ValueObjects\SprintId;
-use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\IssueModel;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 final class CompleteSprintUseCase
@@ -28,18 +28,18 @@ final class CompleteSprintUseCase
         $sprint->complete(new DateTimeImmutable);
         $this->sprintRepository->save($sprint);
 
-        $incompleteIssues = IssueModel::query()
-            ->where('sprint_id', $sprintId)
-            ->whereHas('status', function ($query) {
-                $query->where('category', '!=', 'DONE');
-            })
-            ->get();
+        $issueIds = DB::table('issues')
+            ->join('statuses', 'issues.status_id', '=', 'statuses.id')
+            ->where('issues.sprint_id', $sprintId)
+            ->whereNull('issues.deleted_at')
+            ->where('statuses.category', '!=', 'DONE')
+            ->pluck('issues.id');
 
         /** @var IssueRepositoryInterface $issueRepo */
         $issueRepo = app(IssueRepositoryInterface::class);
 
-        foreach ($incompleteIssues as $issueModel) {
-            $issueEntity = $issueRepo->findById(new IssueId($issueModel->id));
+        foreach ($issueIds as $issueId) {
+            $issueEntity = $issueRepo->findById(new IssueId((string) $issueId));
             if ($issueEntity) {
                 $newSprintId = $moveToSprintId ? new SprintId($moveToSprintId) : null;
                 $issueEntity->updateDetails(

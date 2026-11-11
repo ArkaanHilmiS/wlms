@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Requests;
 
-use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\ProjectModel;
-use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\WorkspaceModel;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -23,65 +22,44 @@ final class GetProjectAnalyticsHttpRequest extends FormRequest
             abort(404, 'Project not found.');
         }
 
-        $project = ProjectModel::where('id', $projectId)->whereNull('deleted_at')->first();
+        $project = DB::table('projects')
+            ->join('workspaces', 'workspaces.id', '=', 'projects.workspace_id')
+            ->where('projects.id', $projectId)
+            ->whereNull('projects.deleted_at')
+            ->whereNull('workspaces.deleted_at')
+            ->first([
+                'projects.id',
+                'projects.workspace_id',
+                'projects.lead_id',
+                'workspaces.owner_group_id',
+                'workspaces.status',
+            ]);
+
         if (! $project) {
             abort(404, 'Project not found.');
         }
 
-        // 1. Superadmin check
-        if ($user->email === 'superadmin@wlms.com') {
+        if (WorkloadAccessChecker::canManageWorkspace($user->id, (string) $project->workspace_id, $project) || (string) $project->lead_id === (string) $user->id) {
             return true;
         }
 
-        if ($user->hasRole('Superadmin')) {
-            return true;
+        $workspaceId = (string) $project->workspace_id;
+        $hasAnalyticsPerm = $user->hasPermission('analytics:view')
+            || $user->hasPermission('projects:manage')
+            || $user->hasPermission('analytics:view', 'WORKSPACE', $workspaceId)
+            || $user->hasPermission('projects:manage', 'WORKSPACE', $workspaceId)
+            || $user->hasPermission('analytics:view', 'PROJECT', $projectId)
+            || $user->hasPermission('projects:manage', 'PROJECT', $projectId);
+
+        if (! $hasAnalyticsPerm) {
+            abort(403, 'Unauthorized.');
         }
 
-        $isSuperadmin = DB::table('user_roles')
-            ->join('roles', 'user_roles.role_id', '=', 'roles.id')
-            ->where('user_roles.user_id', $user->id)
-            ->where('roles.name', 'Superadmin')
-            ->exists();
-        if ($isSuperadmin) {
-            return true;
+        if (! WorkloadAccessChecker::canViewProject($user->id, $projectId, (string) $project->workspace_id, $project->lead_id)) {
+            abort(403, 'Unauthorized.');
         }
 
-        // 2. Workspace owner group / internal member
-        $workspace = WorkspaceModel::where('id', $project->workspace_id)->whereNull('deleted_at')->first();
-        if ($workspace && $user->org_unit_id && $user->org_unit_id === $workspace->owner_group_id) {
-            return true;
-        }
-
-        // 3. Project lead
-        if ($project->lead_id !== null && (int) $project->lead_id === (int) $user->id) {
-            return true;
-        }
-
-        // 4. Assigned to at least one issue in the project
-        $isAssigned = DB::table('issues')
-            ->where('project_id', $project->id)
-            ->whereNull('deleted_at')
-            ->where('assignee_id', $user->id)
-            ->exists();
-        if ($isAssigned) {
-            return true;
-        }
-
-        // 5. Context role in the project
-        $hasContextRole = DB::table('user_roles')
-            ->where('context_id', $project->id)
-            ->where('context_type', 'PROJECT')
-            ->where('user_id', $user->id)
-            ->exists();
-        if ($hasContextRole) {
-            return true;
-        }
-
-        // 6. Workspace membership
-        return DB::table('workspace_members')
-            ->where('workspace_id', $project->workspace_id)
-            ->where('user_id', $user->id)
-            ->exists();
+        return true;
     }
 
     /**

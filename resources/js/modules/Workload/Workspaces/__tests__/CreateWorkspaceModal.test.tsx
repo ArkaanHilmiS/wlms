@@ -10,13 +10,13 @@ vi.mock('@/lib/axios', () => {
     return {
         default: {
             post: vi.fn(),
-        }
+        },
     };
 });
 
 // Mock useTranslate
 vi.mock('@/hooks/useTranslate', () => ({
-    useTranslate: () => ({ t: (k: string) => k, locale: 'en' })
+    useTranslate: () => ({ t: (k: string) => k, locale: 'en' }),
 }));
 
 describe('CreateWorkspaceModal Behavioral Test', () => {
@@ -28,13 +28,13 @@ describe('CreateWorkspaceModal Behavioral Test', () => {
                 <CreateWorkspaceModal>
                     <button>Open Modal</button>
                 </CreateWorkspaceModal>
-            </QueryClientProvider>
+            </QueryClientProvider>,
         );
     };
 
     it('opens modal, types name, and submits successfully', async () => {
         (axios.post as any).mockResolvedValueOnce({
-            data: { data: { id: 'uuid', name: 'Alpha', status: 'ACTIVE' } }
+            data: { data: { id: 'uuid', name: 'Alpha', status: 'ACTIVE' } },
         });
 
         renderComponent();
@@ -56,8 +56,9 @@ describe('CreateWorkspaceModal Behavioral Test', () => {
 
         // 4. Expect axios.post to be called with correct payload
         await waitFor(() => {
-            expect(axios.post).toHaveBeenCalledWith('/api/workspaces', { name: 'Alpha' });
+            expect(axios.post).toHaveBeenCalledWith('/api/workspaces', {
+                name: 'Alpha',
+            });
         });
     });
 });
-

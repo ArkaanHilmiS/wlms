@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property int|string $user_id
+ * @property string $role_id
+ * @property string|null $context_type
+ * @property string|null $context_id
+ * @property-read RoleModel|null $role
+ * @property-read UserModel|null $user
+ */
 class UserRoleModel extends Model
 {
     use HasUuids;

@@ -2,21 +2,21 @@ import React, { useState, useMemo } from 'react';
 import { Role } from '../hooks/use-roles';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Trash2, Shield, ArrowUpDown } from 'lucide-react';
 import { ManageRoleAccessDialog } from './Roles/ManageRoleAccessDialog';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/data-table';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface RoleListProps {
     roles: Role[];
@@ -35,15 +35,21 @@ export function RoleList({ roles, onDelete }: RoleListProps) {
                     return (
                         <Button
                             variant="ghost"
-                            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                            onClick={() =>
+                                column.toggleSorting(
+                                    column.getIsSorted() === 'asc',
+                                )
+                            }
                             className="-ml-4"
                         >
                             {t('Role Name')}
-                                                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
-                    )
+                    );
                 },
-                cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+                cell: ({ row }) => (
+                    <div className="font-medium">{row.getValue('name')}</div>
+                ),
             },
             {
                 accessorKey: 'scope',
@@ -64,7 +70,7 @@ export function RoleList({ roles, onDelete }: RoleListProps) {
                     return (
                         <span className="text-muted-foreground">
                             {role.permissions?.length || 0} {t('permissions')}
-                                                    </span>
+                        </span>
                     );
                 },
             },
@@ -74,40 +80,58 @@ export function RoleList({ roles, onDelete }: RoleListProps) {
                 cell: ({ row }) => {
                     const role = row.original;
                     return (
-                        <div className="text-right space-x-2">
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                        <div className="space-x-2 text-right">
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setManagedRole(role)}
                                 title={t('Manage Access')}
                             >
-                                <Shield className="w-4 h-4" />
-                                <span className="sr-only">{t('Manage Access')}</span>
+                                <Shield className="h-4 w-4" />
+                                <span className="sr-only">
+                                    {t('Manage Access')}
+                                </span>
                             </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
                                         className="text-destructive hover:text-destructive"
                                         title={t('Delete Role')}
+                                        disabled={
+                                            role.name.toLowerCase() ===
+                                            'superadmin'
+                                        }
                                     >
-                                        <Trash2 className="w-4 h-4" />
-                                        <span className="sr-only">{t('Delete Role')}</span>
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">
+                                            {t('Delete Role')}
+                                        </span>
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
+                                        <AlertDialogTitle>
+                                            {t('Are you absolutely sure?')}
+                                        </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the role "{role.name}" and remove it from any assigned users.
+                                            This action cannot be undone. This
+                                            will permanently delete the role "
+                                            {role.name}" and remove it from any
+                                            assigned users.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => onDelete(role.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                        <AlertDialogCancel>
+                                            {t('Cancel')}
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={() => onDelete(role.id)}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
                                             {t('Delete')}
-                                                                                    </AlertDialogAction>
+                                        </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -116,17 +140,17 @@ export function RoleList({ roles, onDelete }: RoleListProps) {
                 },
             },
         ],
-        [onDelete]
+        [onDelete],
     );
 
     return (
         <div className="w-full">
             <DataTable columns={columns} data={roles} searchKey="name" />
 
-            <ManageRoleAccessDialog 
-                role={managedRole} 
-                open={!!managedRole} 
-                onOpenChange={(open) => !open && setManagedRole(null)} 
+            <ManageRoleAccessDialog
+                role={managedRole}
+                open={!!managedRole}
+                onOpenChange={(open) => !open && setManagedRole(null)}
             />
         </div>
     );

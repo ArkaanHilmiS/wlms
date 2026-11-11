@@ -13,10 +13,7 @@ configureEcho({
     broadcaster: 'reverb',
 });
 
-
-
-
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'WorkPulse';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,12 +44,14 @@ void createInertiaApp({
     strictMode: true,
     withApp(app) {
         return (
-            <QueryClientProvider client={queryClient}><ErrorBoundary>
-                <TooltipProvider delayDuration={0}>
-                    {app}
-                    <Toaster />
-                </TooltipProvider>
-            </ErrorBoundary></QueryClientProvider>
+            <QueryClientProvider client={queryClient}>
+                <ErrorBoundary>
+                    <TooltipProvider delayDuration={0}>
+                        {app}
+                        <Toaster />
+                    </TooltipProvider>
+                </ErrorBoundary>
+            </QueryClientProvider>
         );
     },
     progress: {

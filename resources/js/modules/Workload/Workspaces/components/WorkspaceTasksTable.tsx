@@ -1,18 +1,66 @@
 import React, { useState, useMemo } from 'react';
 import { useWorkspaceIssues } from '../hooks/useWorkspaceIssues';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { IssueFormDialog, SelectOption } from '@/modules/Workload/Issues/components/IssueFormDialog';
-import { Plus, Search, Pencil, ChevronLeft, ChevronRight, User, FolderKanban } from 'lucide-react';
-import { CreateIssuePayload, UpdateIssuePayload } from '@/modules/Workload/Issues/hooks/useIssues';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+    IssueFormDialog,
+    SelectOption,
+} from '@/modules/Workload/Issues/components/IssueFormDialog';
+import {
+    Plus,
+    Search,
+    Pencil,
+    ChevronLeft,
+    ChevronRight,
+    User,
+    FolderKanban,
+    Download,
+    FileSpreadsheet,
+    FileText,
+} from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    CreateIssuePayload,
+    UpdateIssuePayload,
+} from '@/modules/Workload/Issues/hooks/useIssues';
 import { Input } from '@/components/ui/input';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import axios from '@/lib/axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslate } from '@/hooks/useTranslate';
+import { usePermission } from '@/hooks/usePermission';
 import { useIconSize } from '@/hooks/use-appearance';
 import { cn } from '@/lib/utils';
 import { Project } from '@/modules/Workload/Projects/types';
@@ -20,11 +68,21 @@ import { Issue } from '@/types/issue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useBulkUpdateIssues } from '@/modules/Workload/Issues/hooks/useIssues';
 
+interface WorkspaceTasksLookups {
+    users?: SelectOption[];
+    statuses?: SelectOption[];
+    priorities?: SelectOption[];
+    issueTypes?: SelectOption[];
+    [key: string]: unknown;
+}
+
 interface WorkspaceTasksTableProps {
     workspaceId: string;
     projects: Project[];
-    lookups?: any;
+    lookups?: WorkspaceTasksLookups;
     currentUserId?: string;
+    canManageIssues?: boolean;
+    initialAssigneeFilter?: string;
 }
 
 export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
@@ -32,14 +90,20 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
     projects,
     lookups,
     currentUserId,
+    canManageIssues,
+    initialAssigneeFilter,
 }) => {
     const { t } = useTranslate();
+    const { can } = usePermission();
+    const canCreateTask = canManageIssues ?? can('issues:manage');
     const { iconSize, updateIconSize } = useIconSize();
     const queryClient = useQueryClient();
 
     // Filters State
     const [selectedProject, setSelectedProject] = useState<string>('all');
-    const [selectedAssignee, setSelectedAssignee] = useState<string>('all');
+    const [selectedAssignee, setSelectedAssignee] = useState<string>(
+        initialAssigneeFilter || 'all',
+    );
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -51,10 +115,71 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // Bulk Update State
     const [selectedIssueIds, setSelectedIssueIds] = useState<string[]>([]);
-    const { mutateAsync: bulkUpdateIssues, isPending: isBulkUpdating } = useBulkUpdateIssues();
+    const { mutateAsync: bulkUpdateIssues, isPending: isBulkUpdating } =
+        useBulkUpdateIssues();
+
+    // Export State & Handler
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async (format: 'xlsx' | 'csv') => {
+        setIsExporting(true);
+        toast.info(t('Generating export...'));
+
+        try {
+            const params: Record<string, string> = {
+                format,
+            };
+
+            if (selectedProject !== 'all') {
+                params.project_id = selectedProject;
+            }
+            if (selectedAssignee !== 'all') {
+                if (selectedAssignee === 'assigned_to_me' && currentUserId) {
+                    params.assignee_id = currentUserId;
+                } else {
+                    params.assignee_id = selectedAssignee;
+                }
+            }
+            if (statusFilter !== 'all') {
+                params.status_category = statusFilter;
+            }
+            if (searchQuery.trim()) {
+                params.search = searchQuery.trim();
+            }
+
+            const response = await axios.get(
+                `/api/workspaces/${workspaceId}/issues/export`,
+                {
+                    params,
+                    responseType: 'blob',
+                },
+            );
+
+            const blob = new Blob([response.data], {
+                type:
+                    format === 'xlsx'
+                        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        : 'text/csv',
+            });
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = `tasks_${new Date().toISOString().slice(0, 10)}.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            toast.success(t('Export downloaded successfully.'));
+        } catch {
+            toast.error(t('Failed to export data.'));
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     // Fetch All Workspace Issues
     const { data: issues = [], isLoading } = useWorkspaceIssues(workspaceId);
@@ -68,19 +193,24 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
 
     // Filter Logic
     const filteredIssues = useMemo(() => {
-        return issues.filter((issue: any) => {
+        return issues.filter((issue: Issue) => {
             // Project filter
-            if (selectedProject !== 'all' && String(issue.project_id) !== String(selectedProject)) {
+            if (
+                selectedProject !== 'all' &&
+                String(issue.project_id) !== String(selectedProject)
+            ) {
                 return false;
             }
 
             // Assignee filter
             if (selectedAssignee === 'assigned_to_me') {
-                if (String(issue.assignee_id) !== String(currentUserId)) return false;
+                if (String(issue.assignee_id) !== String(currentUserId))
+                    return false;
             } else if (selectedAssignee === 'unassigned') {
                 if (issue.assignee_id) return false;
             } else if (selectedAssignee !== 'all') {
-                if (String(issue.assignee_id) !== String(selectedAssignee)) return false;
+                if (String(issue.assignee_id) !== String(selectedAssignee))
+                    return false;
             }
 
             // Status category filter
@@ -99,7 +229,14 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
 
             return true;
         });
-    }, [issues, selectedProject, selectedAssignee, statusFilter, searchQuery, currentUserId]);
+    }, [
+        issues,
+        selectedProject,
+        selectedAssignee,
+        statusFilter,
+        searchQuery,
+        currentUserId,
+    ]);
 
     // Pagination Calculations
     const totalItems = filteredIssues.length;
@@ -112,7 +249,7 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
     }, [filteredIssues, safeCurrentPage, perPage]);
 
     // Reset pagination to page 1 on filter change
-    const handleFilterChange = (setter: (val: any) => void, val: any) => {
+    const handleFilterChange = (setter: (val: string) => void, val: string) => {
         setter(val);
         setCurrentPage(1);
     };
@@ -130,7 +267,9 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
     };
 
     // Handle Create or Update Submit
-    const handleFormSubmit = async (payload: CreateIssuePayload | UpdateIssuePayload) => {
+    const handleFormSubmit = async (
+        payload: CreateIssuePayload | UpdateIssuePayload,
+    ) => {
         setIsSubmitting(true);
         try {
             if (editingIssue) {
@@ -140,20 +279,31 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
             } else {
                 // Create new issue
                 const createPayload = payload as CreateIssuePayload;
-                const targetProjectId = createPayload.project_id || projects[0]?.id;
+                const targetProjectId =
+                    createPayload.project_id || projects[0]?.id;
                 if (!targetProjectId) {
                     toast.error(t('Project is required'));
                     return;
                 }
-                await axios.post(`/api/projects/${targetProjectId}/issues`, createPayload);
+                await axios.post(
+                    `/api/projects/${targetProjectId}/issues`,
+                    createPayload,
+                );
                 toast.success(t('Task created successfully'));
             }
 
-            queryClient.invalidateQueries({ queryKey: ['workspaces', workspaceId, 'issues'] });
+            queryClient.invalidateQueries({
+                queryKey: ['workspaces', workspaceId, 'issues'],
+            });
             setIsFormOpen(false);
             setEditingIssue(null);
-        } catch (error: any) {
-            toast.error(error?.response?.data?.message || t('Failed to save task'));
+        } catch (error: unknown) {
+            const message =
+                error && typeof error === 'object' && 'response' in error
+                    ? (error as { response?: { data?: { message?: string } } })
+                          .response?.data?.message
+                    : undefined;
+            toast.error(message || t('Failed to save task'));
         } finally {
             setIsSubmitting(false);
         }
@@ -162,17 +312,22 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
     return (
         <div className="space-y-4">
             {/* Filter Bar */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-card p-4 rounded-xl border shadow-xs">
-                <div className="flex flex-wrap items-center gap-2 flex-1">
+            <div className="bg-card flex flex-col items-stretch justify-between gap-3 rounded-xl border p-4 shadow-xs lg:flex-row lg:items-center">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
                     {/* Search Input */}
                     <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
                         <Input
                             type="search"
                             placeholder={t('Search task title or key...')}
-                            className="pl-8 h-9 text-xs"
+                            className="h-9 pl-8 text-xs"
                             value={searchQuery}
-                            onChange={(e) => handleFilterChange(setSearchQuery, e.target.value)}
+                            onChange={(e) =>
+                                handleFilterChange(
+                                    setSearchQuery,
+                                    e.target.value,
+                                )
+                            }
                         />
                     </div>
 
@@ -180,16 +335,22 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                     <div className="w-full sm:w-48">
                         <Select
                             value={selectedProject}
-                            onValueChange={(val) => handleFilterChange(setSelectedProject, val)}
+                            onValueChange={(val) =>
+                                handleFilterChange(setSelectedProject, val)
+                            }
                         >
                             <SelectTrigger className="h-9 text-xs">
                                 <div className="flex items-center gap-1.5 truncate">
-                                    <FolderKanban className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                    <SelectValue placeholder={t('All Projects')} />
+                                    <FolderKanban className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                    <SelectValue
+                                        placeholder={t('All Projects')}
+                                    />
                                 </div>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{t('All Projects')}</SelectItem>
+                                <SelectItem value="all">
+                                    {t('All Projects')}
+                                </SelectItem>
                                 {projects.map((p) => (
                                     <SelectItem key={p.id} value={p.id}>
                                         {p.name}
@@ -203,20 +364,30 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                     <div className="w-full sm:w-48">
                         <Select
                             value={selectedAssignee}
-                            onValueChange={(val) => handleFilterChange(setSelectedAssignee, val)}
+                            onValueChange={(val) =>
+                                handleFilterChange(setSelectedAssignee, val)
+                            }
                         >
                             <SelectTrigger className="h-9 text-xs">
                                 <div className="flex items-center gap-1.5 truncate">
-                                    <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                    <SelectValue placeholder={t('All Assignees')} />
+                                    <User className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                    <SelectValue
+                                        placeholder={t('All Assignees')}
+                                    />
                                 </div>
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{t('All Assignees')}</SelectItem>
+                                <SelectItem value="all">
+                                    {t('All Assignees')}
+                                </SelectItem>
                                 {currentUserId && (
-                                    <SelectItem value="assigned_to_me">{t('Assigned to Me')}</SelectItem>
+                                    <SelectItem value="assigned_to_me">
+                                        {t('Assigned to Me')}
+                                    </SelectItem>
                                 )}
-                                <SelectItem value="unassigned">{t('Unassigned')}</SelectItem>
+                                <SelectItem value="unassigned">
+                                    {t('Unassigned')}
+                                </SelectItem>
                                 {users.map((u) => (
                                     <SelectItem key={u.id} value={u.id}>
                                         {u.name}
@@ -230,25 +401,37 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                     <div className="w-full sm:w-36">
                         <Select
                             value={statusFilter}
-                            onValueChange={(val) => handleFilterChange(setStatusFilter, val)}
+                            onValueChange={(val) =>
+                                handleFilterChange(setStatusFilter, val)
+                            }
                         >
                             <SelectTrigger className="h-9 text-xs">
                                 <SelectValue placeholder={t('All Statuses')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">{t('All Statuses')}</SelectItem>
-                                <SelectItem value="TODO">{t('To Do')}</SelectItem>
-                                <SelectItem value="IN_PROGRESS">{t('In Progress')}</SelectItem>
-                                <SelectItem value="DONE">{t('Done')}</SelectItem>
+                                <SelectItem value="all">
+                                    {t('All Statuses')}
+                                </SelectItem>
+                                <SelectItem value="TODO">
+                                    {t('To Do')}
+                                </SelectItem>
+                                <SelectItem value="IN_PROGRESS">
+                                    {t('In Progress')}
+                                </SelectItem>
+                                <SelectItem value="DONE">
+                                    {t('Done')}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 </div>
 
                 {/* Density Selector & Create Task Button */}
-                <div className="flex items-center justify-end gap-2 shrink-0">
-                    <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg border">
-                        <span className="text-[11px] font-medium text-muted-foreground px-1 hidden md:inline">{t('Density')}:</span>
+                <div className="flex shrink-0 items-center justify-end gap-2">
+                    <div className="bg-muted/60 flex items-center gap-1.5 rounded-lg border p-1">
+                        <span className="text-muted-foreground hidden px-1 text-[11px] font-medium md:inline">
+                            {t('Density')}:
+                        </span>
                         <Button
                             variant={iconSize === 'sm' ? 'default' : 'ghost'}
                             size="sm"
@@ -278,73 +461,182 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                         </Button>
                     </div>
 
-                    <Button size="sm" className="h-9 text-xs shrink-0" onClick={handleOpenCreate}>
-                        <Plus className="mr-1.5 h-4 w-4" />
-                        {t('Create Task')}
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 shrink-0 gap-1.5 text-xs"
+                                disabled={isExporting}
+                            >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>
+                                    {isExporting
+                                        ? t('Exporting...')
+                                        : t('Export')}
+                                </span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => handleExport('xlsx')}
+                                className="cursor-pointer gap-2 text-xs"
+                            >
+                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                                <span>Excel (.xlsx)</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleExport('csv')}
+                                className="cursor-pointer gap-2 text-xs"
+                            >
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span>CSV (.csv)</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {canCreateTask && (
+                        <Button
+                            size="sm"
+                            className="h-9 shrink-0 text-xs"
+                            onClick={handleOpenCreate}
+                        >
+                            <Plus className="mr-1.5 h-4 w-4" />
+                            {t('Create Task')}
+                        </Button>
+                    )}
                 </div>
             </div>
 
             {/* Tasks Data Table */}
-            <div className="rounded-xl border bg-card overflow-hidden shadow-xs">
+            <div className="bg-card overflow-hidden rounded-xl border shadow-xs">
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[40px] px-4">
-                                <Checkbox 
-                                    checked={paginatedIssues.length > 0 && paginatedIssues.every((i: any) => selectedIssueIds.includes(String(i.id)))}
+                                <Checkbox
+                                    checked={
+                                        paginatedIssues.length > 0 &&
+                                        paginatedIssues.every((i: Issue) =>
+                                            selectedIssueIds.includes(
+                                                String(i.id),
+                                            ),
+                                        )
+                                    }
                                     onCheckedChange={(checked) => {
                                         if (checked) {
-                                            const ids = new Set([...selectedIssueIds, ...paginatedIssues.map((i: any) => String(i.id))]);
-                                            setSelectedIssueIds(Array.from(ids));
+                                            const ids = new Set([
+                                                ...selectedIssueIds,
+                                                ...paginatedIssues.map(
+                                                    (i: Issue) => String(i.id),
+                                                ),
+                                            ]);
+                                            setSelectedIssueIds(
+                                                Array.from(ids),
+                                            );
                                         } else {
-                                            const idsToRemove = new Set(paginatedIssues.map((i: any) => String(i.id)));
-                                            setSelectedIssueIds(selectedIssueIds.filter(id => !idsToRemove.has(id)));
+                                            const idsToRemove = new Set(
+                                                paginatedIssues.map(
+                                                    (i: Issue) => String(i.id),
+                                                ),
+                                            );
+                                            setSelectedIssueIds(
+                                                selectedIssueIds.filter(
+                                                    (id) =>
+                                                        !idsToRemove.has(id),
+                                                ),
+                                            );
                                         }
                                     }}
                                     aria-label="Select all"
                                 />
                             </TableHead>
-                            <TableHead className="w-[180px]">{t('Project')}</TableHead>
+                            <TableHead className="w-[180px]">
+                                {t('Project')}
+                            </TableHead>
                             <TableHead>{t('Task Title')}</TableHead>
-                            <TableHead className="w-[150px]">{t('Status')}</TableHead>
-                            <TableHead className="w-[130px]">{t('Priority')}</TableHead>
-                            <TableHead className="w-[160px]">{t('Assignee')}</TableHead>
-                            <TableHead className="w-[80px] text-right">{t('Action')}</TableHead>
+                            <TableHead className="w-[150px]">
+                                {t('Status')}
+                            </TableHead>
+                            <TableHead className="w-[130px]">
+                                {t('Priority')}
+                            </TableHead>
+                            <TableHead className="w-[160px]">
+                                {t('Assignee')}
+                            </TableHead>
+                            <TableHead className="w-[150px]">
+                                {t('Due Date')}
+                            </TableHead>
+                            <TableHead className="w-[80px] text-right">
+                                {t('Action')}
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
+                                <TableCell
+                                    colSpan={8}
+                                    className="text-muted-foreground py-12 text-center text-sm"
+                                >
                                     {t('Loading tasks...')}
                                 </TableCell>
                             </TableRow>
                         ) : paginatedIssues.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
-                                    {t('No tasks found matching your filter criteria.')}
+                                <TableCell
+                                    colSpan={8}
+                                    className="text-muted-foreground py-12 text-center text-sm"
+                                >
+                                    {t(
+                                        'No tasks found matching your filter criteria.',
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            paginatedIssues.map((issue: any) => {
-                                const proj = projects.find((p) => p.id === issue.project_id) || issue.project;
+                            paginatedIssues.map((issue: Issue) => {
+                                const proj =
+                                    projects.find(
+                                        (p) => p.id === issue.project_id,
+                                    ) || issue.project;
 
                                 return (
                                     <TableRow
                                         key={issue.id}
                                         className={`hover:bg-muted/40 transition-colors ${
-                                            iconSize === 'sm' ? 'h-11 text-xs' : iconSize === 'lg' ? 'h-16 text-sm' : 'h-13'
+                                            iconSize === 'sm'
+                                                ? 'h-11 text-xs'
+                                                : iconSize === 'lg'
+                                                  ? 'h-16 text-sm'
+                                                  : 'h-13'
                                         }`}
                                     >
                                         <TableCell className="px-4">
-                                            <Checkbox 
-                                                checked={selectedIssueIds.includes(String(issue.id))}
+                                            <Checkbox
+                                                checked={selectedIssueIds.includes(
+                                                    String(issue.id),
+                                                )}
                                                 onCheckedChange={(checked) => {
                                                     if (checked) {
-                                                        setSelectedIssueIds(prev => [...prev, String(issue.id)]);
+                                                        setSelectedIssueIds(
+                                                            (prev) => [
+                                                                ...prev,
+                                                                String(
+                                                                    issue.id,
+                                                                ),
+                                                            ],
+                                                        );
                                                     } else {
-                                                        setSelectedIssueIds(prev => prev.filter(id => id !== String(issue.id)));
+                                                        setSelectedIssueIds(
+                                                            (prev) =>
+                                                                prev.filter(
+                                                                    (id) =>
+                                                                        id !==
+                                                                        String(
+                                                                            issue.id,
+                                                                        ),
+                                                                ),
+                                                        );
                                                     }
                                                 }}
                                                 aria-label="Select row"
@@ -354,34 +646,39 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                                             {proj ? (
                                                 <Badge
                                                     variant="outline"
-                                                    className="text-xs font-normal max-w-[160px] truncate bg-background"
+                                                    className="bg-background max-w-[160px] truncate text-xs font-normal"
                                                     title={proj.name}
                                                 >
                                                     {proj.name}
                                                 </Badge>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground">-</span>
+                                                <span className="text-muted-foreground text-xs">
+                                                    -
+                                                </span>
                                             )}
                                         </TableCell>
 
                                         <TableCell>
                                             <div
-                                                onClick={() => handleOpenEdit(issue)}
-                                                className="font-medium text-sm text-foreground hover:underline hover:text-primary cursor-pointer line-clamp-1"
+                                                onClick={() =>
+                                                    handleOpenEdit(issue)
+                                                }
+                                                className="text-foreground hover:text-primary line-clamp-1 cursor-pointer text-sm font-medium hover:underline"
                                                 title={issue.title}
                                             >
                                                 {issue.title}
                                             </div>
                                             {issue.id && (
-                                                <span className="text-[11px] font-mono text-muted-foreground">
+                                                <span className="text-muted-foreground font-mono text-[11px]">
                                                     {issue.id.slice(0, 8)}
                                                 </span>
                                             )}
                                         </TableCell>
 
                                         <TableCell>
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground">
-                                                {issue.status?.name || t('Unknown')}
+                                            <span className="bg-muted text-foreground inline-flex items-center rounded px-2 py-0.5 text-xs font-medium">
+                                                {issue.status?.name ||
+                                                    t('Unknown')}
                                             </span>
                                         </TableCell>
 
@@ -389,17 +686,72 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                                             {issue.priority ? (
                                                 <PriorityBadge
                                                     name={issue.priority.name}
-                                                    category={issue.priority.category}
+                                                    category={
+                                                        issue.priority.category
+                                                    }
                                                     size={iconSize}
                                                 />
                                             ) : (
-                                                <span className="text-xs text-muted-foreground">-</span>
+                                                <span className="text-muted-foreground text-xs">
+                                                    -
+                                                </span>
                                             )}
                                         </TableCell>
 
-                                        <TableCell className="text-xs text-muted-foreground">
+                                        <TableCell className="text-muted-foreground text-xs">
                                             {issue.assignee?.name || (
-                                                <span className="text-muted-foreground/60 italic">{t('Unassigned')}</span>
+                                                <span className="text-muted-foreground/60 italic">
+                                                    {t('Unassigned')}
+                                                </span>
+                                            )}
+                                        </TableCell>
+
+                                        <TableCell className="text-xs whitespace-nowrap">
+                                            {issue.due_date ? (
+                                                (() => {
+                                                    const todayStr = new Date()
+                                                        .toISOString()
+                                                        .slice(0, 10);
+                                                    const dueStr =
+                                                        issue.due_date.slice(
+                                                            0,
+                                                            10,
+                                                        );
+                                                    const isDone =
+                                                        issue.status?.category?.toUpperCase() ===
+                                                        'DONE';
+                                                    const isOverdue =
+                                                        issue.is_overdue ??
+                                                        (!isDone &&
+                                                            dueStr < todayStr);
+                                                    return (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span
+                                                                className={
+                                                                    isOverdue
+                                                                        ? 'font-medium text-red-600 dark:text-red-400'
+                                                                        : 'text-muted-foreground'
+                                                                }
+                                                            >
+                                                                {dueStr}
+                                                            </span>
+                                                            {isOverdue && (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="border-red-500/20 bg-red-500/10 px-1.5 py-0 text-[10px] font-semibold text-red-600 dark:text-red-400"
+                                                                >
+                                                                    {t(
+                                                                        'Overdue',
+                                                                    )}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()
+                                            ) : (
+                                                <span className="text-muted-foreground">
+                                                    -
+                                                </span>
                                             )}
                                         </TableCell>
 
@@ -408,7 +760,9 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-8 w-8 p-0"
-                                                onClick={() => handleOpenEdit(issue)}
+                                                onClick={() =>
+                                                    handleOpenEdit(issue)
+                                                }
                                                 title={t('Edit / Update Task')}
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
@@ -422,21 +776,30 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                 </Table>
 
                 {/* Pagination Controls Footer */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t bg-card text-xs text-muted-foreground">
+                <div className="bg-card text-muted-foreground flex flex-col items-center justify-between gap-4 border-t px-4 py-3 text-xs sm:flex-row">
                     <div className="flex items-center gap-3">
                         <span>
                             {t('Showing')}{' '}
                             <strong className="text-foreground">
-                                {totalItems === 0 ? 0 : (safeCurrentPage - 1) * perPage + 1}
+                                {totalItems === 0
+                                    ? 0
+                                    : (safeCurrentPage - 1) * perPage + 1}
                             </strong>{' '}
                             {t('to')}{' '}
                             <strong className="text-foreground">
-                                {Math.min(safeCurrentPage * perPage, totalItems)}
+                                {Math.min(
+                                    safeCurrentPage * perPage,
+                                    totalItems,
+                                )}
                             </strong>{' '}
-                            {t('of')} <strong className="text-foreground">{totalItems}</strong> {t('tasks')}
+                            {t('of')}{' '}
+                            <strong className="text-foreground">
+                                {totalItems}
+                            </strong>{' '}
+                            {t('tasks')}
                         </span>
 
-                        <div className="flex items-center gap-1.5 ml-2">
+                        <div className="ml-2 flex items-center gap-1.5">
                             <span>{t('Rows per page:')}</span>
                             <Select
                                 value={perPage.toString()}
@@ -445,7 +808,7 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                                     setCurrentPage(1);
                                 }}
                             >
-                                <SelectTrigger className="h-7 w-18 text-xs bg-background">
+                                <SelectTrigger className="bg-background h-7 w-18 text-xs">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -460,8 +823,14 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
 
                     <div className="flex items-center gap-1.5">
                         <span className="mr-2">
-                            {t('Page')} <strong className="text-foreground">{safeCurrentPage}</strong> {t('of')}{' '}
-                            <strong className="text-foreground">{totalPages}</strong>
+                            {t('Page')}{' '}
+                            <strong className="text-foreground">
+                                {safeCurrentPage}
+                            </strong>{' '}
+                            {t('of')}{' '}
+                            <strong className="text-foreground">
+                                {totalPages}
+                            </strong>
                         </span>
 
                         <Button
@@ -469,7 +838,9 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                             size="sm"
                             className="h-7 w-7 p-0"
                             disabled={safeCurrentPage <= 1}
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            onClick={() =>
+                                setCurrentPage((p) => Math.max(1, p - 1))
+                            }
                         >
                             <ChevronLeft className="h-3.5 w-3.5" />
                         </Button>
@@ -478,7 +849,11 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
                             size="sm"
                             className="h-7 w-7 p-0"
                             disabled={safeCurrentPage >= totalPages}
-                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            onClick={() =>
+                                setCurrentPage((p) =>
+                                    Math.min(totalPages, p + 1),
+                                )
+                            }
                         >
                             <ChevronRight className="h-3.5 w-3.5" />
                         </Button>
@@ -488,71 +863,129 @@ export const WorkspaceTasksTable: React.FC<WorkspaceTasksTableProps> = ({
 
             {/* Floating Action Bar */}
             {selectedIssueIds.length > 0 && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card border shadow-lg rounded-full px-6 py-3 flex items-center gap-4 z-50 animate-in slide-in-from-bottom-5">
+                <div className="bg-card animate-in slide-in-from-bottom-5 fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-full border px-6 py-3 shadow-lg">
                     <span className="text-sm font-medium whitespace-nowrap">
                         {selectedIssueIds.length} {t('tasks selected')}
                     </span>
-                    <div className="h-4 w-px bg-border" />
-                    
-                    <Select onValueChange={async (val) => {
-                        try {
-                            await bulkUpdateIssues({ issueIds: selectedIssueIds, payload: { status_id: val } });
-                            toast.success(t('Tasks updated successfully'));
-                            setSelectedIssueIds([]);
-                        } catch (e) {
-                            toast.error(t('Failed to update tasks'));
-                        }
-                    }}>
-                        <SelectTrigger className="h-8 text-xs w-[130px] border-none shadow-none focus:ring-0">
-                            <SelectValue placeholder={t('Update Status')} />
-                        </SelectTrigger>
-                        <SelectContent side="top">
-                            {lookups?.statuses?.map((s: any) => (
-                                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="bg-border h-4 w-px" />
 
-                    <Select onValueChange={async (val) => {
-                        try {
-                            await bulkUpdateIssues({ issueIds: selectedIssueIds, payload: { assignee_id: val === 'unassigned' ? null : val } });
-                            toast.success(t('Tasks assigned successfully'));
-                            setSelectedIssueIds([]);
-                        } catch (e) {
-                            toast.error(t('Failed to assign tasks'));
-                        }
-                    }}>
-                        <SelectTrigger className="h-8 text-xs w-[140px] border-none shadow-none focus:ring-0">
-                            <SelectValue placeholder={t('Update Assignee')} />
-                        </SelectTrigger>
-                        <SelectContent side="top">
-                            <SelectItem value="unassigned">{t('Unassigned')}</SelectItem>
-                            {users.map((u: any) => (
-                                <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={async () => {
-                            if (window.confirm(t('Are you sure you want to delete selected tasks?'))) {
-                                try {
-                                    const promises = selectedIssueIds.map(id => axios.delete(`/api/issues/${id}`));
-                                    await Promise.all(promises);
-                                    queryClient.invalidateQueries({ queryKey: ['workspaces', workspaceId, 'issues'] });
-                                    toast.success(t('Tasks deleted successfully'));
-                                    setSelectedIssueIds([]);
-                                } catch (e) {
-                                    toast.error(t('Failed to delete tasks'));
-                                }
+                    <Select
+                        onValueChange={async (val) => {
+                            try {
+                                await bulkUpdateIssues({
+                                    issueIds: selectedIssueIds,
+                                    payload: { status_id: val },
+                                });
+                                toast.success(t('Tasks updated successfully'));
+                                setSelectedIssueIds([]);
+                            } catch (e) {
+                                toast.error(t('Failed to update tasks'));
                             }
                         }}
                     >
-                        {t('Delete')}
-                    </Button>
+                        <SelectTrigger className="h-8 w-[130px] border-none text-xs shadow-none focus:ring-0">
+                            <SelectValue placeholder={t('Update Status')} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                            {lookups?.statuses?.map((s: SelectOption) => (
+                                <SelectItem key={s.id} value={String(s.id)}>
+                                    {s.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select
+                        onValueChange={async (val) => {
+                            try {
+                                await bulkUpdateIssues({
+                                    issueIds: selectedIssueIds,
+                                    payload: {
+                                        assignee_id:
+                                            val === 'unassigned' ? null : val,
+                                    },
+                                });
+                                toast.success(t('Tasks assigned successfully'));
+                                setSelectedIssueIds([]);
+                            } catch (e) {
+                                toast.error(t('Failed to assign tasks'));
+                            }
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[140px] border-none text-xs shadow-none focus:ring-0">
+                            <SelectValue placeholder={t('Update Assignee')} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
+                            <SelectItem value="unassigned">
+                                {t('Unassigned')}
+                            </SelectItem>
+                            {users.map((u: SelectOption) => (
+                                <SelectItem key={u.id} value={String(u.id)}>
+                                    {u.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 text-xs"
+                            >
+                                {t('Delete')}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    {t('Delete Selected Tasks')}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t(
+                                        'Are you sure you want to delete selected tasks?',
+                                    )}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                    {t('Cancel')}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={async () => {
+                                        try {
+                                            const promises =
+                                                selectedIssueIds.map((id) =>
+                                                    axios.delete(
+                                                        `/api/issues/${id}`,
+                                                    ),
+                                                );
+                                            await Promise.all(promises);
+                                            queryClient.invalidateQueries({
+                                                queryKey: [
+                                                    'workspaces',
+                                                    workspaceId,
+                                                    'issues',
+                                                ],
+                                            });
+                                            toast.success(
+                                                t('Tasks deleted successfully'),
+                                            );
+                                            setSelectedIssueIds([]);
+                                        } catch {
+                                            toast.error(
+                                                t('Failed to delete tasks'),
+                                            );
+                                        }
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                    {t('Delete')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             )}
 

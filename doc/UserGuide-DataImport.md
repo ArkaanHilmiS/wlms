@@ -38,6 +38,6 @@ Untuk mengimpor Task atau Issue, pastikan baris pertama (header) file spreadshee
 
 ## 5. Proses Impor di Latar Belakang (Background)
 
-- Sistem mengimpor data menggunakan *background jobs* (`ImportProjectsJob` dan `ImportIssuesJob`).
+- Sistem mengimpor data menggunakan _background jobs_ (`ImportProjectsJob` dan `ImportIssuesJob`).
 - Setelah mengunggah file, Anda akan mendapatkan notifikasi bahwa file sedang diproses. Anda **tidak perlu** membiarkan halaman tetap terbuka.
 - Sistem secara perlahan memetakan dan mengimpor baris per baris di belakang layar tanpa mengganggu kinerja aplikasi bagi pengguna lain.

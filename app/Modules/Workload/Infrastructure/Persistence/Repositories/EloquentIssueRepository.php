@@ -46,6 +46,8 @@ final class EloquentIssueRepository implements IssueRepositoryInterface
 
     public function nextNumberForProject(ProjectId $projectId): int
     {
+        ProjectModel::query()->where('id', $projectId->value)->lockForUpdate()->value('id');
+
         $max = IssueModel::query()
             ->where('project_id', $projectId->value)
             ->max('number');

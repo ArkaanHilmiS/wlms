@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Workload\Presentation\Http\Controllers;
 
-use App\Modules\Workload\Application\UseCases\GetProjectLookupsQuery;
+use App\Modules\Workload\Application\Queries\GetProjectLookupsQuery;
+use App\Modules\Workload\Application\Services\WorkloadAccessChecker;
 use App\Modules\Workload\Infrastructure\Persistence\Eloquent\Models\ProjectModel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -21,9 +22,15 @@ final class ShowProjectPageController extends Controller
         // Pragmatic CQRS: Read model bypasses Domain Layer
         $projectModel = ProjectModel::findOrFail($id);
 
+        $user = $request->user();
+        if (! $user || ! WorkloadAccessChecker::canViewProject($user->id, (string) $projectModel->id)) {
+            abort(403, 'Unauthorized access to this project.');
+        }
+
         $lookups = $this->getProjectLookupsQuery->getLookupsForProject(
-            $projectModel->workspace_id,
-            $projectModel->workflow_id
+            (string) $projectModel->workspace_id,
+            $projectModel->workflow_id,
+            (string) $projectModel->id
         );
 
         return inertia('Projects/Show', [

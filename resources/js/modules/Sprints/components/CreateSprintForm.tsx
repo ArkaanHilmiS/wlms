@@ -15,14 +15,20 @@ interface CreateSprintFormProps {
     defaultProjectId?: string;
 }
 
-export function CreateSprintForm({ onSubmit, isLoading, defaultProjectId = '' }: CreateSprintFormProps) {
+export function CreateSprintForm({
+    onSubmit,
+    isLoading,
+    defaultProjectId = '',
+}: CreateSprintFormProps) {
     const [formData, setFormData] = useState<CreateSprintFormData>({
         project_id: defaultProjectId,
         name: '',
         goal: '',
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -66,7 +72,7 @@ export function CreateSprintForm({ onSubmit, isLoading, defaultProjectId = '' }:
                 />
             </div>
 
-            <div className="pt-4 flex justify-end">
+            <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isLoading}>
                     {isLoading ? 'Creating...' : 'Create Sprint'}
                 </Button>
@@ -74,4 +80,3 @@ export function CreateSprintForm({ onSubmit, isLoading, defaultProjectId = '' }:
         </form>
     );
 }
-

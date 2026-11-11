@@ -14,10 +14,11 @@ final class ImportIssuesUseCase
 {
     /**
      * @param  Collection<int, array<string, mixed>>  $rows
+     * @return array{total_rows: int, success_count: int, skipped_count: int, errors: list<string>}
      */
-    public function execute(Collection $rows, string $reporterId): void
+    public function execute(Collection $rows, string $reporterId): array
     {
-        DB::transaction(function () use ($rows, $reporterId) {
+        return DB::transaction(function () use ($rows, $reporterId) {
             $defaultIssueType = DB::table('issue_types')->where('name', 'Task')->first()
                                 ?? DB::table('issue_types')->first();
             $defaultPriority = DB::table('priorities')->orderBy('level')->first();
@@ -48,14 +49,42 @@ final class ImportIssuesUseCase
             if (! empty($picNames)) {
                 $usersQuery = DB::table('users');
                 foreach ($picNames as $picName) {
-                    $usersQuery->orWhere('name', 'LIKE', "%{$picName}%");
+                    $trimmedPic = trim((string) $picName);
+                    $usersQuery->orWhere('name', 'LIKE', "%{$trimmedPic}%")
+                        ->orWhere('email', '=', $trimmedPic)
+                        ->orWhere('employee_id', '=', $trimmedPic);
                 }
-                $matchedUsers = $usersQuery->get(['id', 'name']);
+                $matchedUsers = $usersQuery->get(['id', 'name', 'email', 'employee_id']);
                 foreach ($picNames as $picName) {
+                    $trimmedPic = trim((string) $picName);
                     foreach ($matchedUsers as $u) {
-                        if (stripos($u->name, $picName) !== false) {
+                        if (! empty($u->employee_id) && strcasecmp(trim((string) $u->employee_id), $trimmedPic) === 0) {
                             $usersMap[$picName] = $u->id;
                             break;
+                        }
+                    }
+                    if (! isset($usersMap[$picName])) {
+                        foreach ($matchedUsers as $u) {
+                            if (! empty($u->email) && strcasecmp(trim((string) $u->email), $trimmedPic) === 0) {
+                                $usersMap[$picName] = $u->id;
+                                break;
+                            }
+                        }
+                    }
+                    if (! isset($usersMap[$picName])) {
+                        foreach ($matchedUsers as $u) {
+                            if (strcasecmp(trim((string) $u->name), $trimmedPic) === 0) {
+                                $usersMap[$picName] = $u->id;
+                                break;
+                            }
+                        }
+                    }
+                    if (! isset($usersMap[$picName])) {
+                        foreach ($matchedUsers as $u) {
+                            if (stripos($u->name, $trimmedPic) !== false) {
+                                $usersMap[$picName] = $u->id;
+                                break;
+                            }
                         }
                     }
                 }
@@ -78,26 +107,31 @@ final class ImportIssuesUseCase
             }
 
             $insertData = [];
+            $errors = [];
             $now = Carbon::now()->toDateTimeString();
 
-            foreach ($rows as $row) {
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
                 $projectName = $row['project'] ?? null;
                 if (! $projectName) {
-                    Log::warning('ImportIssuesJob: Skipped issue, no project name provided.');
+                    $errors[] = "Row {$rowNumber}: Project name is missing.";
+                    Log::warning("ImportIssuesJob: Row {$rowNumber} skipped issue, no project name provided.");
 
                     continue;
                 }
 
                 $projectId = $projectsMap[$projectName] ?? null;
                 if (! $projectId) {
-                    Log::warning("ImportIssuesJob: Skipped issue, project not found: {$projectName}");
+                    $errors[] = "Row {$rowNumber}: Project '{$projectName}' not found in database.";
+                    Log::warning("ImportIssuesJob: Row {$rowNumber} skipped issue, project not found: {$projectName}");
 
                     continue;
                 }
 
                 $title = $row['task'] ?? $row['title'] ?? null;
                 if (! $title) {
-                    Log::warning('ImportIssuesJob: Skipped issue, no title/task provided.');
+                    $errors[] = "Row {$rowNumber}: Task title is missing.";
+                    Log::warning("ImportIssuesJob: Row {$rowNumber} skipped issue, no title/task provided.");
 
                     continue;
                 }
@@ -170,6 +204,13 @@ final class ImportIssuesUseCase
                     DB::table('issues')->insert($chunk);
                 }
             }
+
+            return [
+                'total_rows' => $rows->count(),
+                'success_count' => count($insertData),
+                'skipped_count' => count($errors),
+                'errors' => $errors,
+            ];
         });
     }
 }

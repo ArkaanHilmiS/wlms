@@ -23,22 +23,29 @@ export function ArchiveWorkspaceDialog({
     onOpenChange,
     workspaceName,
     onConfirm,
-    isPending = false
+    isPending = false,
 }: ArchiveWorkspaceDialogProps) {
     const { t } = useTranslate();
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
+                    <AlertDialogTitle>
+                        {t('Are you absolutely sure?')}
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                        {t('This will archive the workspace')} <strong>{workspaceName}</strong>. 
-                        {t('Archived workspaces become read-only and are hidden from active views.')}
+                        {t('This will archive the workspace')}{' '}
+                        <strong>{workspaceName}</strong>.
+                        {t(
+                            'Archived workspaces become read-only and are hidden from active views.',
+                        )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isPending}>{t('Cancel')}</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogCancel disabled={isPending}>
+                        {t('Cancel')}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
                         onClick={(e) => {
                             e.preventDefault();
                             onConfirm();

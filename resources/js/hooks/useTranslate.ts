@@ -11,7 +11,7 @@ export function useTranslate() {
             Object.keys(replacements).forEach((replaceKey) => {
                 translation = translation.replace(
                     new RegExp(`:${replaceKey}`, 'g'),
-                    String(replacements[replaceKey])
+                    String(replacements[replaceKey]),
                 );
             });
         }

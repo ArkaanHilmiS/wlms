@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Bell, MessageSquare, ClipboardList, CheckCircle2, RefreshCw } from 'lucide-react';
+import {
+    Bell,
+    MessageSquare,
+    ClipboardList,
+    CheckCircle2,
+    RefreshCw,
+    AlertTriangle,
+    Clock,
+    AtSign,
+} from 'lucide-react';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { usePage } from '@inertiajs/react';
 import { useTranslate } from '@/hooks/useTranslate';
@@ -15,7 +24,8 @@ import { formatDistanceToNow } from 'date-fns';
 
 export const NotificationBell = () => {
     const { auth } = usePage().props as any;
-    const { notifications, unreadCount, markAllRead, isLoading } = useNotifications(auth?.user?.id);
+    const { notifications, unreadCount, markAllRead, isLoading } =
+        useNotifications(auth?.user?.id);
     const [open, setOpen] = useState(false);
     const { t } = useTranslate();
 
@@ -27,19 +37,43 @@ export const NotificationBell = () => {
     };
 
     const getIcon = (type: string) => {
-        if (type === 'issue.assigned') return <ClipboardList className="h-4 w-4 text-primary" />;
-        if (type === 'comment.added') return <MessageSquare className="h-4 w-4 text-primary" />;
-        if (type === 'issue.transitioned') return <RefreshCw className="h-4 w-4 text-primary" />;
-        if (type === 'sprint.state_changed') return <CheckCircle2 className="h-4 w-4 text-primary" />;
-        return <Bell className="h-4 w-4 text-muted-foreground" />;
+        if (type === 'issue.overdue')
+            return <AlertTriangle className="text-destructive h-4 w-4" />;
+        if (type === 'issue.due_soon')
+            return <Clock className="h-4 w-4 text-amber-500" />;
+        if (type === 'issue.assigned' || type === 'issue_assigned')
+            return <ClipboardList className="text-primary h-4 w-4" />;
+        if (type === 'comment.mentioned')
+            return <AtSign className="text-primary h-4 w-4" />;
+        if (type === 'comment.added')
+            return <MessageSquare className="text-primary h-4 w-4" />;
+        if (type === 'issue.transitioned')
+            return <RefreshCw className="text-primary h-4 w-4" />;
+        if (type === 'sprint.state_changed')
+            return <CheckCircle2 className="text-primary h-4 w-4" />;
+        return <Bell className="text-muted-foreground h-4 w-4" />;
     };
 
     const getMessage = (notification: Notification) => {
         const { type, data } = notification;
-        if (type === 'issue.assigned') return t('You were assigned to issue :number', { number: data?.issue_number });
-        if (type === 'comment.added') return t('New comment: :preview', { preview: data?.body_preview });
+        if (type === 'issue.overdue')
+            return `Overdue: [${data?.issue_number}] ${data?.title || ''} (Due: ${data?.due_date})`;
+        if (type === 'issue.due_soon')
+            return `Due soon: [${data?.issue_number}] ${data?.title || ''} (Due: ${data?.due_date})`;
+        if (type === 'issue.assigned' || type === 'issue_assigned')
+            return t('You were assigned to issue :number', {
+                number: data?.issue_number,
+            });
+        if (type === 'comment.mentioned')
+            return `${data?.author_name || t('Someone')} ${t('mentioned you')}: ${data?.body_preview || ''}`;
+        if (type === 'comment.added')
+            return t('New comment: :preview', { preview: data?.body_preview });
         if (type === 'issue.transitioned') return t('Issue status changed');
-        if (type === 'sprint.state_changed') return t('Sprint :name is now :state', { name: data?.sprint_name, state: data?.new_state });
+        if (type === 'sprint.state_changed')
+            return t('Sprint :name is now :state', {
+                name: data?.sprint_name,
+                state: data?.new_state,
+            });
         return t('New notification');
     };
 
@@ -49,9 +83,9 @@ export const NotificationBell = () => {
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <Badge 
-                            variant="destructive" 
-                            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
+                        <Badge
+                            variant="destructive"
+                            className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
                         >
                             {unreadCount > 99 ? '99+' : unreadCount}
                         </Badge>
@@ -59,12 +93,14 @@ export const NotificationBell = () => {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <span className="font-semibold text-sm">{t('Notifications')}</span>
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                    <span className="text-sm font-semibold">
+                        {t('Notifications')}
+                    </span>
                     {unreadCount > 0 && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-auto px-2 py-1 text-xs"
                             onClick={() => markAllRead()}
                         >
@@ -74,32 +110,32 @@ export const NotificationBell = () => {
                 </div>
                 <div className="max-h-[300px] overflow-y-auto">
                     {isLoading ? (
-                        <div className="p-4 space-y-4">
+                        <div className="space-y-4 p-4">
                             <div className="flex gap-3">
                                 <Skeleton className="h-8 w-8 rounded-full" />
-                                <div className="space-y-2 flex-1">
+                                <div className="flex-1 space-y-2">
                                     <Skeleton className="h-4 w-full" />
                                     <Skeleton className="h-3 w-20" />
                                 </div>
                             </div>
                             <div className="flex gap-3">
                                 <Skeleton className="h-8 w-8 rounded-full" />
-                                <div className="space-y-2 flex-1">
+                                <div className="flex-1 space-y-2">
                                     <Skeleton className="h-4 w-3/4" />
                                     <Skeleton className="h-3 w-20" />
                                 </div>
                             </div>
                         </div>
                     ) : notifications.length === 0 ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground">
+                        <div className="text-muted-foreground p-8 text-center text-sm">
                             {t('No notifications yet')}
                         </div>
                     ) : (
                         <div className="divide-y">
                             {notifications.map((notification) => (
-                                <div 
-                                    key={notification.id} 
-                                    className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors ${!notification.read_at ? 'bg-muted/20' : ''}`}
+                                <div
+                                    key={notification.id}
+                                    className={`hover:bg-muted/50 flex gap-3 p-4 transition-colors ${!notification.read_at ? 'bg-muted/20' : ''}`}
                                 >
                                     <div className="mt-0.5">
                                         {getIcon(notification.type)}
@@ -108,12 +144,17 @@ export const NotificationBell = () => {
                                         <p className="text-sm leading-tight">
                                             {getMessage(notification)}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                        <p className="text-muted-foreground text-xs">
+                                            {formatDistanceToNow(
+                                                new Date(
+                                                    notification.created_at,
+                                                ),
+                                                { addSuffix: true },
+                                            )}
                                         </p>
                                     </div>
                                     {!notification.read_at && (
-                                        <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                                        <div className="bg-primary mt-1.5 h-2 w-2 shrink-0 rounded-full" />
                                     )}
                                 </div>
                             ))}

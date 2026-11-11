@@ -30,9 +30,19 @@ interface ComboboxProps {
     emptyText?: string;
     id?: string;
     disabled?: boolean;
+    className?: string;
 }
 
-export function Combobox({ options, value, onChange, placeholder = "Select option...", emptyText = "No option found.", id, disabled }: ComboboxProps) {
+export function Combobox({
+    options,
+    value,
+    onChange,
+    placeholder = "Select option...",
+    emptyText = "No option found.",
+    id,
+    disabled,
+    className,
+}: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -44,15 +54,19 @@ export function Combobox({ options, value, onChange, placeholder = "Select optio
           disabled={disabled}
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between font-normal"
+          className={cn("w-full justify-between font-normal", className)}
         >
           {value
-            ? options.find((option) => option.value === value)?.label || "Invalid (Please update)"
+            ? options.find((option) => option.value === value)?.label ||
+              (options.length === 0 ? placeholder : "Invalid (Please update)")
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] min-w-[200px] p-0"
+        align="start"
+      >
         <Command>
           <CommandInput placeholder={placeholder} />
           <CommandList>

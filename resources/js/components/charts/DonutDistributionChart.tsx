@@ -54,9 +54,14 @@ export function DonutDistributionChart({
 }: DonutDistributionChartProps) {
     const { iconSize } = useIconSize();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
 
-    const totalValue = data ? data.reduce((sum, d) => sum + (Number(d.value) || 0), 0) : 0;
+    const totalValue = data
+        ? data.reduce((sum, d) => sum + (Number(d.value) || 0), 0)
+        : 0;
 
     if (!data || data.length === 0 || totalValue === 0) {
         return (
@@ -94,7 +99,7 @@ export function DonutDistributionChart({
 
     return (
         <div
-            className={cn('flex flex-col w-full items-center', className)}
+            className={cn('flex w-full flex-col items-center', className)}
             data-slot="donut-distribution-chart"
         >
             <ResponsiveContainer
@@ -116,8 +121,12 @@ export function DonutDistributionChart({
 
                         return data.map((item, idx) => {
                             const val = Math.max(0, Number(item.value) || 0);
-                            const sliceRatio = totalValue > 0 ? val / totalValue : 0;
-                            const sweepAngle = Math.max(0, sliceRatio * 2 * Math.PI - gapAngle);
+                            const sliceRatio =
+                                totalValue > 0 ? val / totalValue : 0;
+                            const sweepAngle = Math.max(
+                                0,
+                                sliceRatio * 2 * Math.PI - gapAngle,
+                            );
 
                             const startAngle = currentAngle + gapAngle / 2;
                             const endAngle = startAngle + sweepAngle;
@@ -125,7 +134,9 @@ export function DonutDistributionChart({
 
                             const color =
                                 item.color ||
-                                DEFAULT_CHART_COLORS[idx % DEFAULT_CHART_COLORS.length];
+                                DEFAULT_CHART_COLORS[
+                                    idx % DEFAULT_CHART_COLORS.length
+                                ];
 
                             // Generate SVG path
                             let path = '';
@@ -141,17 +152,26 @@ export function DonutDistributionChart({
                                     Z
                                 `;
                             } else if (val > 0) {
-                                const x1 = cx + outerRadius * Math.cos(startAngle);
-                                const y1 = cy + outerRadius * Math.sin(startAngle);
-                                const x2 = cx + outerRadius * Math.cos(endAngle);
-                                const y2 = cy + outerRadius * Math.sin(endAngle);
+                                const x1 =
+                                    cx + outerRadius * Math.cos(startAngle);
+                                const y1 =
+                                    cy + outerRadius * Math.sin(startAngle);
+                                const x2 =
+                                    cx + outerRadius * Math.cos(endAngle);
+                                const y2 =
+                                    cy + outerRadius * Math.sin(endAngle);
 
-                                const x3 = cx + innerRadius * Math.cos(endAngle);
-                                const y3 = cy + innerRadius * Math.sin(endAngle);
-                                const x4 = cx + innerRadius * Math.cos(startAngle);
-                                const y4 = cy + innerRadius * Math.sin(startAngle);
+                                const x3 =
+                                    cx + innerRadius * Math.cos(endAngle);
+                                const y3 =
+                                    cy + innerRadius * Math.sin(endAngle);
+                                const x4 =
+                                    cx + innerRadius * Math.cos(startAngle);
+                                const y4 =
+                                    cy + innerRadius * Math.sin(startAngle);
 
-                                const largeArcFlag = sweepAngle > Math.PI ? 1 : 0;
+                                const largeArcFlag =
+                                    sweepAngle > Math.PI ? 1 : 0;
 
                                 path = `
                                     M ${x1} ${y1}
@@ -200,7 +220,7 @@ export function DonutDistributionChart({
 
                     return (
                         <div
-                            className="relative w-full h-full"
+                            className="relative h-full w-full"
                             onMouseLeave={() => setHoveredIndex(null)}
                         >
                             <svg
@@ -217,18 +237,46 @@ export function DonutDistributionChart({
                                         <g
                                             key={`slice-${idx}`}
                                             className="cursor-pointer transition-all duration-150"
-                                            onClick={() => onSliceClick?.(slice.item, idx)}
+                                            onClick={() =>
+                                                onSliceClick?.(slice.item, idx)
+                                            }
                                             onMouseEnter={(e) => {
                                                 setHoveredIndex(idx);
-                                                const midRadius = (outerRadius + innerRadius) / 2;
-                                                const px = cx + midRadius * Math.cos(slice.midAngle);
-                                                const py = cy + midRadius * Math.sin(slice.midAngle);
+                                                const midRadius =
+                                                    (outerRadius +
+                                                        innerRadius) /
+                                                    2;
+                                                const px =
+                                                    cx +
+                                                    midRadius *
+                                                        Math.cos(
+                                                            slice.midAngle,
+                                                        );
+                                                const py =
+                                                    cy +
+                                                    midRadius *
+                                                        Math.sin(
+                                                            slice.midAngle,
+                                                        );
                                                 setMousePos({ x: px, y: py });
                                             }}
                                             onMouseMove={(e) => {
-                                                const midRadius = (outerRadius + innerRadius) / 2;
-                                                const px = cx + midRadius * Math.cos(slice.midAngle);
-                                                const py = cy + midRadius * Math.sin(slice.midAngle);
+                                                const midRadius =
+                                                    (outerRadius +
+                                                        innerRadius) /
+                                                    2;
+                                                const px =
+                                                    cx +
+                                                    midRadius *
+                                                        Math.cos(
+                                                            slice.midAngle,
+                                                        );
+                                                const py =
+                                                    cy +
+                                                    midRadius *
+                                                        Math.sin(
+                                                            slice.midAngle,
+                                                        );
                                                 setMousePos({ x: px, y: py });
                                             }}
                                         >
@@ -238,8 +286,8 @@ export function DonutDistributionChart({
                                                 className={cn(
                                                     'transition-all duration-150',
                                                     isHovered
-                                                        ? 'opacity-100 brightness-110 drop-shadow-sm scale-[1.02] origin-center'
-                                                        : 'opacity-90'
+                                                        ? 'origin-center scale-[1.02] opacity-100 brightness-110 drop-shadow-sm'
+                                                        : 'opacity-90',
                                                 )}
                                                 style={{
                                                     transformOrigin: `${cx}px ${cy}px`,
@@ -258,8 +306,8 @@ export function DonutDistributionChart({
                                         dominantBaseline="central"
                                         fill="currentColor"
                                         className={cn(
-                                            'text-foreground tabular-nums tracking-tight transition-all',
-                                            config.centerValueClass
+                                            'text-foreground tracking-tight tabular-nums transition-all',
+                                            config.centerValueClass,
                                         )}
                                     >
                                         {activeCenterValue}
@@ -271,8 +319,8 @@ export function DonutDistributionChart({
                                         dominantBaseline="central"
                                         fill="currentColor"
                                         className={cn(
-                                            'truncate max-w-[120px] transition-all',
-                                            config.centerLabelClass
+                                            'max-w-[120px] truncate transition-all',
+                                            config.centerLabelClass,
                                         )}
                                     >
                                         {activeCenterLabel}
@@ -286,7 +334,11 @@ export function DonutDistributionChart({
                                     active={hoveredIndex !== null}
                                     x={mousePos.x}
                                     y={mousePos.y}
-                                    title={activeSlice ? activeSlice.item.label : undefined}
+                                    title={
+                                        activeSlice
+                                            ? activeSlice.item.label
+                                            : undefined
+                                    }
                                     items={tooltipItems}
                                     containerWidth={width}
                                     containerHeight={containerHeight}
@@ -302,12 +354,17 @@ export function DonutDistributionChart({
                 <ChartLegend
                     items={data.map((d, i) => {
                         const val = Number(d.value) || 0;
-                        const pct = totalValue > 0 ? ((val / totalValue) * 100).toFixed(0) : '0';
+                        const pct =
+                            totalValue > 0
+                                ? ((val / totalValue) * 100).toFixed(0)
+                                : '0';
                         return {
                             label: d.label,
                             color:
                                 d.color ||
-                                DEFAULT_CHART_COLORS[i % DEFAULT_CHART_COLORS.length],
+                                DEFAULT_CHART_COLORS[
+                                    i % DEFAULT_CHART_COLORS.length
+                                ],
                             value: `${valueFormatter(val)} (${pct}%)`,
                         };
                     })}

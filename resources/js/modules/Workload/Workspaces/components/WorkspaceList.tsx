@@ -12,18 +12,18 @@ interface WorkspaceListProps {
     canManage?: boolean;
 }
 
-export function WorkspaceList({ 
-    workspaces, 
-    isLoading, 
+export function WorkspaceList({
+    workspaces,
+    isLoading,
     onSelectWorkspace,
     onUpdateWorkspace,
     onArchiveWorkspace,
-    canManage = false
+    canManage = false,
 }: WorkspaceListProps) {
     const { t } = useTranslate();
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
                     <Skeleton key={i} className="h-48 w-full rounded-xl" />
                 ))}
@@ -33,21 +33,25 @@ export function WorkspaceList({
 
     if (workspaces.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-center border rounded-xl bg-muted/20">
-                <h3 className="text-lg font-medium">{t('No Workspaces Found')}</h3>
+            <div className="bg-muted/20 flex flex-col items-center justify-center rounded-xl border p-12 text-center">
+                <h3 className="text-lg font-medium">
+                    {t('No Workspaces Found')}
+                </h3>
                 <p className="text-muted-foreground mt-2">
-                    {t("You don't have any workspaces yet. Create one to get started.")}
+                    {t(
+                        "You don't have any workspaces yet. Create one to get started.",
+                    )}
                 </p>
             </div>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {workspaces.map((workspace) => (
-                <WorkspaceCard 
-                    key={workspace.id} 
-                    workspace={workspace} 
+                <WorkspaceCard
+                    key={workspace.id}
+                    workspace={workspace}
                     onSelect={onSelectWorkspace}
                     onUpdate={onUpdateWorkspace}
                     onArchive={onArchiveWorkspace}
@@ -57,4 +61,3 @@ export function WorkspaceList({
         </div>
     );
 }
-

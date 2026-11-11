@@ -14,11 +14,10 @@ export function useIssueTimeline(issueId: string) {
         queryKey: ['issues', issueId, 'timeline'],
         queryFn: async () => {
             const { data } = await axios.get<{ data: TimelineItem[] }>(
-                `/api/issues/${issueId}/timeline`
+                `/api/issues/${issueId}/timeline`,
             );
             return data.data;
         },
         enabled: Boolean(issueId),
     });
 }
-

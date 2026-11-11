@@ -10,7 +10,7 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 import { useIconSize } from '@/hooks/use-appearance';
 
 export interface BoardFilterState {
@@ -77,11 +77,23 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
         filters.priorityIds.length + filters.issueTypeIds.length;
 
     const avatarSizeClass =
-        iconSize === 'sm' ? 'h-7 w-7' : iconSize === 'lg' ? 'h-9 w-9' : 'h-8 w-8';
+        iconSize === 'sm'
+            ? 'h-7 w-7'
+            : iconSize === 'lg'
+              ? 'h-9 w-9'
+              : 'h-8 w-8';
     const avatarFontClass =
-        iconSize === 'sm' ? 'text-[10px]' : iconSize === 'lg' ? 'text-xs' : 'text-[11px]';
+        iconSize === 'sm'
+            ? 'text-[10px]'
+            : iconSize === 'lg'
+              ? 'text-xs'
+              : 'text-[11px]';
     const buttonHeightClass =
-        iconSize === 'sm' ? 'h-7 text-xs px-2.5' : iconSize === 'lg' ? 'h-9 text-sm px-3.5' : 'h-8 text-xs px-3';
+        iconSize === 'sm'
+            ? 'h-7 text-xs px-2.5'
+            : iconSize === 'lg'
+              ? 'h-9 text-sm px-3.5'
+              : 'h-8 text-xs px-3';
 
     const toggleAssignee = (id: string) => {
         const next = filters.assigneeIds.includes(id)
@@ -108,15 +120,16 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
         onChange({ assigneeIds: [], priorityIds: [], issueTypeIds: [] });
     };
 
-    const hasAnyFilter =
-        filters.assigneeIds.length > 0 || activeCount > 0;
+    const hasAnyFilter = filters.assigneeIds.length > 0 || activeCount > 0;
 
     return (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
             {/* Assignee avatar row */}
             <div className="flex items-center -space-x-1">
                 {users.map((user) => {
-                    const selected = filters.assigneeIds.includes(String(user.id));
+                    const selected = filters.assigneeIds.includes(
+                        String(user.id),
+                    );
                     return (
                         <button
                             key={user.id}
@@ -125,16 +138,21 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
                             className={cn(
                                 'relative rounded-full transition-all focus:outline-none',
                                 selected
-                                    ? 'ring-2 ring-offset-1 ring-primary z-10 scale-110'
-                                    : 'hover:z-10 hover:scale-105 opacity-70 hover:opacity-100'
+                                    ? 'ring-primary z-10 scale-110 ring-2 ring-offset-1'
+                                    : 'opacity-70 hover:z-10 hover:scale-105 hover:opacity-100',
                             )}
                         >
-                            <Avatar className={cn(avatarSizeClass, "border-2 border-background")}>
+                            <Avatar
+                                className={cn(
+                                    avatarSizeClass,
+                                    'border-background border-2',
+                                )}
+                            >
                                 <AvatarFallback
                                     className={cn(
                                         avatarFontClass,
                                         'font-semibold text-white',
-                                        getAvatarColor(String(user.id))
+                                        getAvatarColor(String(user.id)),
                                     )}
                                 >
                                     {getInitials(user.name)}
@@ -145,39 +163,49 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
                 })}
             </div>
 
-            {users.length > 0 && <Separator orientation="vertical" className="h-6" />}
+            {users.length > 0 && (
+                <Separator orientation="vertical" className="h-6" />
+            )}
 
             {/* Filter popover */}
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("gap-1.5 relative", buttonHeightClass)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn('relative gap-1.5', buttonHeightClass)}
+                    >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
                         {t('Filter')}
-                                                {activeCount > 0 && (
+                        {activeCount > 0 && (
                             <Badge
                                 variant="destructive"
-                                className="absolute -top-1.5 -right-1.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full"
+                                className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full p-0 text-[10px]"
                             >
                                 {activeCount}
                             </Badge>
                         )}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-64 p-3 space-y-4">
+                <PopoverContent align="start" className="w-64 space-y-4 p-3">
                     {/* Priority filter */}
                     <div className="space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                             {t('Priority')}
-                                                    </p>
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
                             {priorities.map((p) => {
-                                const active = filters.priorityIds.includes(String(p.id));
+                                const active = filters.priorityIds.includes(
+                                    String(p.id),
+                                );
                                 return (
                                     <Badge
                                         key={p.id}
                                         variant={active ? 'default' : 'outline'}
                                         className="cursor-pointer select-none"
-                                        onClick={() => togglePriority(String(p.id))}
+                                        onClick={() =>
+                                            togglePriority(String(p.id))
+                                        }
                                     >
                                         {p.name}
                                     </Badge>
@@ -190,18 +218,22 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
 
                     {/* Issue type filter */}
                     <div className="space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                             {t('Type')}
-                                                    </p>
+                        </p>
                         <div className="flex flex-wrap gap-1.5">
                             {issueTypes.map((t) => {
-                                const active = filters.issueTypeIds.includes(String(t.id));
+                                const active = filters.issueTypeIds.includes(
+                                    String(t.id),
+                                );
                                 return (
                                     <Badge
                                         key={t.id}
                                         variant={active ? 'default' : 'outline'}
                                         className="cursor-pointer select-none"
-                                        onClick={() => toggleIssueType(String(t.id))}
+                                        onClick={() =>
+                                            toggleIssueType(String(t.id))
+                                        }
                                     >
                                         {t.name}
                                     </Badge>
@@ -218,16 +250,16 @@ export const BoardFilterBar: React.FC<BoardFilterBarProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={clearAll}
-                    className="gap-1 text-muted-foreground hover:text-foreground h-8 px-2"
+                    className="text-muted-foreground hover:text-foreground h-8 gap-1 px-2"
                 >
                     <X className="h-3.5 w-3.5" />
                     {t('Clear')}
-                                    </Button>
+                </Button>
             )}
         </div>
     );
 };
 
-// Jprime butuh data dari fact segment daily 
-// fact segment daily butuh data dari LLOAN jtm dan jas 
-// jika salah 1 LLOAN blm keload maka data yang kerluar tidak valid 
+// Jprime butuh data dari fact segment daily
+// fact segment daily butuh data dari LLOAN jtm dan jas
+// jika salah 1 LLOAN blm keload maka data yang kerluar tidak valid

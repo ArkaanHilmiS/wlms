@@ -30,7 +30,8 @@ export function NavFooter({
                                 asChild
                                 className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
                             >
-                                {typeof item.href === 'string' && item.href.startsWith("http") ? (
+                                {typeof item.href === 'string' &&
+                                item.href.startsWith('http') ? (
                                     <a
                                         href={item.href}
                                         target="_blank"
@@ -49,7 +50,6 @@ export function NavFooter({
                                         <span>{item.title}</span>
                                     </Link>
                                 )}
-
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ))}

@@ -14,10 +14,11 @@ final class ImportProjectsUseCase
 {
     /**
      * @param  Collection<int, array<string, mixed>>  $rows
+     * @return array{total_rows: int, success_count: int, skipped_count: int, errors: list<string>}
      */
-    public function execute(Collection $rows, string $workspaceId): void
+    public function execute(Collection $rows, string $workspaceId): array
     {
-        DB::transaction(function () use ($rows, $workspaceId) {
+        return DB::transaction(function () use ($rows, $workspaceId) {
             $defaultPriority = DB::table('priorities')->orderBy('level')->first();
             $priorityId = $defaultPriority ? $defaultPriority->id : null;
 
@@ -29,12 +30,15 @@ final class ImportProjectsUseCase
             $usedKeys = array_flip($existingKeys);
 
             $insertData = [];
+            $errors = [];
             $now = Carbon::now()->toDateTimeString();
 
-            foreach ($rows as $row) {
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
                 $name = $row['project_name'] ?? $row['project name'] ?? $row['name'] ?? null;
                 if (! $name) {
-                    Log::warning('ImportProjectsJob: Skipped empty project name.');
+                    $errors[] = "Row {$rowNumber}: Project name is empty or missing.";
+                    Log::warning("ImportProjectsJob: Row {$rowNumber} skipped empty project name.");
 
                     continue;
                 }
@@ -90,6 +94,13 @@ final class ImportProjectsUseCase
                     DB::table('projects')->insert($chunk);
                 }
             }
+
+            return [
+                'total_rows' => $rows->count(),
+                'success_count' => count($insertData),
+                'skipped_count' => count($errors),
+                'errors' => $errors,
+            ];
         });
     }
 }

@@ -47,6 +47,7 @@ Setiap kali kamu selesai membuat sebuah fitur/endpoint, kamu **TIDAK BOLEH** han
   "
 
 **8. Lessons Learned from Technical Debt Resolution**
+
 - **Migration Strictness:** Relying on DB dumps breaks SQLite `RefreshDatabase` testing. Migrations must be the single source of truth for the database schema. `php artisan migrate:fresh` must always run flawlessly on both SQLite (testing) and PostgreSQL (production).
 - **Ban N+1 Queries:** N+1 queries must be structurally banned. Ensure `Model::preventLazyLoading(!app()->isProduction())` is active. Always use eager loading appropriately.
 - **O(N) Algorithms for Recursion:** Recursive data structures (like hierarchical Org Units) require $O(N)$ algorithms (e.g., fetching all into a Collection and mapping via `groupBy`) instead of $O(N^2)$ nested Eloquent queries.

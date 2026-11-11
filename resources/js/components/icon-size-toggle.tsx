@@ -13,7 +13,11 @@ interface IconSizeOption {
     badgeText?: string;
 }
 
-export default function IconSizeToggle({ className = '' }: { className?: string }) {
+export default function IconSizeToggle({
+    className = '',
+}: {
+    className?: string;
+}) {
     const { t } = useTranslate();
     const { iconSize, updateIconSize } = useAppearance();
 
@@ -21,7 +25,9 @@ export default function IconSizeToggle({ className = '' }: { className?: string 
         {
             value: 'sm',
             name: t('Small / Compact'),
-            description: t('Compact 28px icons and tighter grid density. Shows maximum projects and rows on one screen.'),
+            description: t(
+                'Compact 28px icons and tighter grid density. Shows maximum projects and rows on one screen.',
+            ),
             icon: Minimize2,
             avatarSize: 'h-7 w-7 text-xs rounded-md',
             avatarText: '28px',
@@ -29,7 +35,9 @@ export default function IconSizeToggle({ className = '' }: { className?: string 
         {
             value: 'md',
             name: t('Medium / Standard'),
-            description: t('Balanced 36px icons with standard spacing. Optimal for daily workflow comfort.'),
+            description: t(
+                'Balanced 36px icons with standard spacing. Optimal for daily workflow comfort.',
+            ),
             icon: LayoutGrid,
             avatarSize: 'h-9 w-9 text-sm rounded-lg',
             avatarText: '36px',
@@ -38,7 +46,9 @@ export default function IconSizeToggle({ className = '' }: { className?: string 
         {
             value: 'lg',
             name: t('Large / Spacious'),
-            description: t('Prominent 48px icons and generous card padding. Ideal for high-DPI displays or touchscreens.'),
+            description: t(
+                'Prominent 48px icons and generous card padding. Ideal for high-DPI displays or touchscreens.',
+            ),
             icon: Maximize2,
             avatarSize: 'h-12 w-12 text-base rounded-xl',
             avatarText: '48px',
@@ -56,53 +66,66 @@ export default function IconSizeToggle({ className = '' }: { className?: string 
                         key={option.value}
                         onClick={() => updateIconSize(option.value)}
                         className={cn(
-                            'relative flex flex-col justify-between rounded-xl border-2 p-4 cursor-pointer transition-all duration-200 hover:border-primary/50',
+                            'hover:border-primary/50 relative flex cursor-pointer flex-col justify-between rounded-xl border-2 p-4 transition-all duration-200',
                             isSelected
                                 ? 'border-primary bg-primary/5 shadow-xs'
-                                : 'border-border bg-card hover:bg-muted/30'
+                                : 'border-border bg-card hover:bg-muted/30',
                         )}
                     >
                         {/* Selected Checkmark Badge */}
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <IconComponent className={cn('h-4 w-4', isSelected ? 'text-primary' : 'text-muted-foreground')} />
-                                <span className="font-semibold text-sm text-foreground">
+                                <IconComponent
+                                    className={cn(
+                                        'h-4 w-4',
+                                        isSelected
+                                            ? 'text-primary'
+                                            : 'text-muted-foreground',
+                                    )}
+                                />
+                                <span className="text-foreground text-sm font-semibold">
                                     {option.name}
                                 </span>
                             </div>
                             {isSelected && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                <span className="bg-primary text-primary-foreground flex h-5 w-5 items-center justify-center rounded-full">
                                     <Check className="h-3 w-3 stroke-[3]" />
                                 </span>
                             )}
                             {option.badgeText && !isSelected && (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[10px] font-medium">
                                     {option.badgeText}
                                 </span>
                             )}
                         </div>
 
                         {/* Interactive Visual Preview Box */}
-                        <div className="my-3 rounded-lg border bg-background/80 p-3 flex items-center gap-3">
+                        <div className="bg-background/80 my-3 flex items-center gap-3 rounded-lg border p-3">
                             <div
                                 className={cn(
-                                    'flex shrink-0 items-center justify-center border font-bold bg-primary/10 text-primary border-primary/20',
-                                    option.avatarSize
+                                    'bg-primary/10 text-primary border-primary/20 flex shrink-0 items-center justify-center border font-bold',
+                                    option.avatarSize,
                                 )}
                             >
                                 P
                             </div>
                             <div className="flex-1 space-y-1.5 overflow-hidden">
-                                <div className={cn(
-                                    'bg-foreground/80 rounded font-medium truncate',
-                                    option.value === 'sm' ? 'h-3 w-3/4' : option.value === 'lg' ? 'h-4 w-4/5' : 'h-3.5 w-3/4'
-                                )} />
-                                <div className="h-2 w-1/2 bg-muted-foreground/30 rounded" />
+                                <div
+                                    className={cn(
+                                        'bg-foreground/80 truncate rounded font-medium',
+                                        option.value === 'sm'
+                                            ? 'h-3 w-3/4'
+                                            : option.value === 'lg'
+                                              ? 'h-4 w-4/5'
+                                              : 'h-3.5 w-3/4',
+                                    )}
+                                />
+                                <div className="bg-muted-foreground/30 h-2 w-1/2 rounded" />
                             </div>
                         </div>
 
                         {/* Description */}
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-muted-foreground mt-1 text-xs">
                             {option.description}
                         </p>
                     </div>
@@ -111,4 +134,3 @@ export default function IconSizeToggle({ className = '' }: { className?: string 
         </div>
     );
 }
-

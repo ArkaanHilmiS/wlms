@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
 import { useWorkflows } from '../../Workflows/hooks/useWorkflows';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface ProjectFormDialogProps {
     open: boolean;
@@ -44,7 +44,8 @@ export function ProjectFormDialog({
     const [workflowId, setWorkflowId] = useState<string>('none');
     const [priorityId, setPriorityId] = useState<string>('none');
 
-    const { data: workflows = [], isLoading: isLoadingWorkflows } = useWorkflows();
+    const { data: workflows = [], isLoading: isLoadingWorkflows } =
+        useWorkflows();
 
     useEffect(() => {
         if (open) {
@@ -56,19 +57,39 @@ export function ProjectFormDialog({
         }
     }, [open, project]);
 
-    const workflowOptions = [{ value: 'none', label: 'Default Workflow' }, ...workflows.map(wf => ({ value: wf.id, label: wf.name }))];
-    const priorityOptions = [{ value: 'none', label: 'No Priority' }, ...priorities.map(p => ({ value: p.id, label: p.name }))];
+    const workflowOptions = [
+        { value: 'none', label: 'Default Workflow' },
+        ...workflows.map((wf) => ({ value: wf.id, label: wf.name })),
+    ];
+    const priorityOptions = [
+        { value: 'none', label: 'No Priority' },
+        ...priorities.map((p) => ({ value: p.id, label: p.name })),
+    ];
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const payloadWorkflowId = workflowId === 'none' ? undefined : workflowId;
-        const payloadPriorityId = priorityId === 'none' ? undefined : priorityId;
-        
+
+        const payloadWorkflowId =
+            workflowId === 'none' ? undefined : workflowId;
+        const payloadPriorityId =
+            priorityId === 'none' ? undefined : priorityId;
+
         if (isEditing) {
-            onSubmit({ name, description, workflow_id: payloadWorkflowId, priority_id: payloadPriorityId });
+            onSubmit({
+                name,
+                description,
+                workflow_id: payloadWorkflowId,
+                priority_id: payloadPriorityId,
+            });
         } else {
-            onSubmit({ workspace_id: workspaceId, key, name, description, workflow_id: payloadWorkflowId, priority_id: payloadPriorityId });
+            onSubmit({
+                workspace_id: workspaceId,
+                key,
+                name,
+                description,
+                workflow_id: payloadWorkflowId,
+                priority_id: payloadPriorityId,
+            });
         }
     };
 
@@ -77,7 +98,9 @@ export function ProjectFormDialog({
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>{isEditing ? 'Edit Project' : 'Create Project'}</DialogTitle>
+                        <DialogTitle>
+                            {isEditing ? 'Edit Project' : 'Create Project'}
+                        </DialogTitle>
                         <DialogDescription>
                             {isEditing
                                 ? 'Update your project details below.'
@@ -92,15 +115,19 @@ export function ProjectFormDialog({
                                 <Input
                                     id="key"
                                     value={key}
-                                    onChange={(e) => setKey(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setKey(e.target.value.toUpperCase())
+                                    }
                                     placeholder="e.g. PROJ"
                                     maxLength={10}
                                     required
                                     disabled={isPending}
                                 />
-                                <p className="text-[0.8rem] text-muted-foreground">
-                                    {t('A unique short identifier for the project.')}
-                                                                    </p>
+                                <p className="text-muted-foreground text-[0.8rem]">
+                                    {t(
+                                        'A unique short identifier for the project.',
+                                    )}
+                                </p>
                             </div>
                         )}
                         <div className="grid gap-2">
@@ -115,18 +142,22 @@ export function ProjectFormDialog({
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Label htmlFor="description">
+                                Description (Optional)
+                            </Label>
                             <Textarea
                                 id="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder={t('Describe the purpose of this project...')}
+                                placeholder={t(
+                                    'Describe the purpose of this project...',
+                                )}
                                 disabled={isPending}
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="workflow">{t('Workflow')}</Label>
-                            <Combobox 
+                            <Combobox
                                 id="workflow"
                                 options={workflowOptions}
                                 value={workflowId}
@@ -134,13 +165,17 @@ export function ProjectFormDialog({
                                 disabled={isPending || isLoadingWorkflows}
                                 placeholder={t('Select a workflow...')}
                             />
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                {t('Select a custom workflow to manage tasks statuses in this project.')}
-                                                            </p>
+                            <p className="text-muted-foreground text-[0.8rem]">
+                                {t(
+                                    'Select a custom workflow to manage tasks statuses in this project.',
+                                )}
+                            </p>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="priority">{t('Project Level Priority')}</Label>
-                            <Combobox 
+                            <Label htmlFor="priority">
+                                {t('Project Level Priority')}
+                            </Label>
+                            <Combobox
                                 id="priority"
                                 options={priorityOptions}
                                 value={priorityId}
@@ -148,17 +183,30 @@ export function ProjectFormDialog({
                                 disabled={isPending}
                                 placeholder={t('Select a priority...')}
                             />
-                            <p className="text-[0.8rem] text-muted-foreground">
-                                Optional urgency level indicating the project's importance.
+                            <p className="text-muted-foreground text-[0.8rem]">
+                                Optional urgency level indicating the project's
+                                importance.
                             </p>
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isPending}
+                        >
                             {t('Cancel')}
-                                                    </Button>
-                        <Button type="submit" disabled={isPending || (!isEditing && !key.trim()) || !name.trim()}>
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={
+                                isPending ||
+                                (!isEditing && !key.trim()) ||
+                                !name.trim()
+                            }
+                        >
                             {isPending ? 'Saving...' : 'Save'}
                         </Button>
                     </DialogFooter>

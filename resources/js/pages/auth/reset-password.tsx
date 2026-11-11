@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { update } from '@/routes/password';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 type Props = {
     token: string;
@@ -61,7 +61,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">
                                 {t('Confirm password')}
-                                                            </Label>
+                            </Label>
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
@@ -84,7 +84,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                         >
                             {processing && <Spinner />}
                             {t('Reset password')}
-                                                    </Button>
+                        </Button>
                     </div>
                 )}
             </Form>

@@ -1,12 +1,14 @@
 # API Contract: Notifications
 
 ## 1. Get User Notifications
+
 Mengambil daftar notifikasi milik pengguna yang sedang login.
 
 **Endpoint**: `GET /api/notifications`  
 **Auth**: Bearer Token / Sanctum Cookie
 
 ### Response (200 OK)
+
 ```json
 {
     "data": [
@@ -31,12 +33,14 @@ Mengambil daftar notifikasi milik pengguna yang sedang login.
 ```
 
 ## 2. Mark All as Read
+
 Menandai semua notifikasi milik pengguna yang belum dibaca menjadi sudah dibaca.
 
 **Endpoint**: `PUT /api/notifications/read`  
 **Auth**: Bearer Token / Sanctum Cookie
 
 ### Response (200 OK)
+
 ```json
 {
     "message": "Notifications marked as read.",
@@ -45,11 +49,13 @@ Menandai semua notifikasi milik pengguna yang belum dibaca menjadi sudah dibaca.
 ```
 
 ## 3. WebSocket Channel
+
 **Broadcaster**: Laravel Reverb  
 **Channel Name**: `private-user.{userId}`  
 **Event Name**: `NewNotification`
 
 ### Event Payload
+
 ```json
 {
     "id": "9a3e6f9b-...",

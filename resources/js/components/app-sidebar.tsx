@@ -1,5 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Briefcase, HelpCircle, CheckSquare, Users, Folder, Settings } from 'lucide-react';
+import {
+    BookOpen,
+    FolderGit2,
+    LayoutGrid,
+    Briefcase,
+    HelpCircle,
+    CheckSquare,
+    Users,
+    Folder,
+    Settings,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -35,7 +45,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export function AppSidebar() {
-    const { auth } = usePage().props as unknown as { auth: { user: { menus?: DBMenuItem[] } } };
+    const { auth } = usePage().props as unknown as {
+        auth: { user: { menus?: DBMenuItem[] } };
+    };
     const dashboardUrl = '/dashboard';
     const { t } = useTranslate();
 
@@ -45,7 +57,7 @@ export function AppSidebar() {
             title: t('Dashboard'),
             href: dashboardUrl,
             icon: LayoutGrid,
-        }
+        },
     ];
 
     // 2. DYNAMIC MENUS (Datang dari database/RBAC user via Shared Props)
@@ -64,10 +76,15 @@ export function AppSidebar() {
 
     // 3. GABUNGKAN DENGAN MENCEGAH DUPLIKASI
     // Pastikan menu dinamis tidak me-render ulang menu default (misal: Dashboard)
-    const defaultHrefs = defaultNavItems.map(item => item.href);
-    const filteredDynamicNavItems = dynamicNavItems.filter(item => !defaultHrefs.includes(item.href));
-    
-    const mainNavItems: NavItem[] = [...defaultNavItems, ...filteredDynamicNavItems];
+    const defaultHrefs = defaultNavItems.map((item) => item.href);
+    const filteredDynamicNavItems = dynamicNavItems.filter(
+        (item) => !defaultHrefs.includes(item.href),
+    );
+
+    const mainNavItems: NavItem[] = [
+        ...defaultNavItems,
+        ...filteredDynamicNavItems,
+    ];
 
     const footerNavItems: NavItem[] = [
         {

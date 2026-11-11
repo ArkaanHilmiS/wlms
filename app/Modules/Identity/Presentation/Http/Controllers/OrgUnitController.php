@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Presentation\Http\Controllers;
 
+use App\Modules\Identity\Application\Services\OrgUnitTreeService;
 use App\Modules\Identity\Infrastructure\Persistence\Eloquent\Models\OrgUnitModel;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -12,10 +13,14 @@ use Illuminate\Support\Facades\Gate;
 
 class OrgUnitController extends Controller
 {
+    public function __construct(
+        private readonly OrgUnitTreeService $treeService = new OrgUnitTreeService()
+    ) {}
+
     public function index(): JsonResponse
     {
         Gate::authorize('manage-rbac');
-        $allUnits = OrgUnitModel::with('level')->get();
+        $allUnits = OrgUnitModel::with('level')->limit(500)->get();
 
         // Group by parent_id. Laravel groupBy maps null to empty string.
         $grouped = $allUnits->groupBy(fn ($unit) => $unit->parent_id ?: '');
@@ -53,38 +58,12 @@ class OrgUnitController extends Controller
             'name' => 'required|string|max:150',
             'code' => 'nullable|string|max:30|unique:org_units,code',
             'is_active' => 'boolean',
+            'max_workspaces' => 'nullable|integer|min:0',
         ]);
 
         $unit = DB::transaction(function () use ($validated) {
             $newUnit = OrgUnitModel::create($validated);
-
-            // Insert into org_unit_closures
-            // Self
-            DB::table('org_unit_closures')->insert([
-                'ancestor_id' => $newUnit->id,
-                'descendant_id' => $newUnit->id,
-                'depth' => 0,
-            ]);
-
-            // Ancestors
-            if (! empty($validated['parent_id'])) {
-                // Fetch all ancestors of parent and insert for new node
-                $ancestors = DB::table('org_unit_closures')
-                    ->where('descendant_id', $validated['parent_id'])
-                    ->get();
-
-                $inserts = [];
-                foreach ($ancestors as $ancestor) {
-                    $inserts[] = [
-                        'ancestor_id' => $ancestor->ancestor_id,
-                        'descendant_id' => $newUnit->id,
-                        'depth' => $ancestor->depth + 1,
-                    ];
-                }
-                if (count($inserts) > 0) {
-                    DB::table('org_unit_closures')->insert($inserts);
-                }
-            }
+            $this->treeService->registerUnit($newUnit->id, $validated['parent_id'] ?? null);
 
             return $newUnit;
         });
@@ -109,53 +88,21 @@ class OrgUnitController extends Controller
             'name' => 'sometimes|required|string|max:150',
             'code' => 'sometimes|nullable|string|max:30|unique:org_units,code,'.$id,
             'is_active' => 'boolean',
+            'max_workspaces' => 'sometimes|nullable|integer|min:0',
         ]);
 
         DB::transaction(function () use ($unit, $validated) {
-            // Check if parent is actually changing
             $oldParentId = $unit->parent_id;
             $newParentId = array_key_exists('parent_id', $validated) ? $validated['parent_id'] : $oldParentId;
 
-            // Prevent setting parent to itself
             if ($newParentId === $unit->id) {
                 abort(422, 'Cannot set an organization unit as its own parent.');
             }
 
-            // Update basic details
             $unit->update($validated);
 
-            // Handle Subtree Move in Closure Table if parent_id changed
             if ($oldParentId !== $newParentId) {
-                // Prevent circular references (cannot move to one of its own descendants)
-                if ($newParentId) {
-                    $isDescendant = DB::table('org_unit_closures')
-                        ->where('ancestor_id', $unit->id)
-                        ->where('descendant_id', $newParentId)
-                        ->exists();
-                    if ($isDescendant) {
-                        abort(422, 'Cannot move unit under its own descendant.');
-                    }
-                }
-
-                // 1. Delete paths that disconnect the subtree from its old ancestors
-                // Delete where descendant is in the subtree AND ancestor is NOT in the subtree
-                DB::statement('
-                    DELETE FROM org_unit_closures 
-                    WHERE descendant_id IN (SELECT descendant_id FROM (SELECT descendant_id FROM org_unit_closures WHERE ancestor_id = ?) AS tmpsub)
-                    AND ancestor_id IN (SELECT ancestor_id FROM (SELECT ancestor_id FROM org_unit_closures WHERE descendant_id = ? AND ancestor_id != ?) AS tmpanc)
-                ', [$unit->id, $unit->id, $unit->id]);
-
-                // 2. Insert new paths connecting the new ancestors to the subtree
-                if ($newParentId) {
-                    DB::statement('
-                        INSERT INTO org_unit_closures (ancestor_id, descendant_id, depth)
-                        SELECT supertree.ancestor_id, subtree.descendant_id, supertree.depth + subtree.depth + 1
-                        FROM org_unit_closures AS supertree
-                        CROSS JOIN org_unit_closures AS subtree
-                        WHERE supertree.descendant_id = ?
-                        AND subtree.ancestor_id = ?
-                    ', [$newParentId, $unit->id]);
-                }
+                $this->treeService->moveSubtree($unit->id, $newParentId);
             }
         });
 

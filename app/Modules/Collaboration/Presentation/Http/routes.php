@@ -9,6 +9,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/issues/{issueId}/timeline', GetIssueTimelineController::class)
         ->name('collaboration.issues.timeline');
 
+    Route::get('/issues/{issueId}/comments', [AddCommentController::class, 'index'])
+        ->name('collaboration.issues.comments.index');
+
     Route::post('/issues/{issueId}/comments', AddCommentController::class)
         ->name('collaboration.issues.comments.add');
 

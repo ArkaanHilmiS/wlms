@@ -4,7 +4,14 @@ import ProfileController from '@/actions/App/Modules/Identity/Presentation/Http/
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    CardFooter,
+} from '@/components/ui/card';
 import {
     Dialog,
     DialogClose,
@@ -21,19 +28,21 @@ export default function DeleteUser() {
 
     return (
         <Card className="border-red-200">
-            <CardHeader >
+            <CardHeader>
                 <CardTitle className="text-red-600">Delete Account</CardTitle>
                 <CardDescription>
                     Permanently delete your account and all of its resources.
                 </CardDescription>
             </CardHeader>
-            
-            <CardContent >
-                <div className="rounded-lg border border-red-100 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 max-w-xl">
+
+            <CardContent>
+                <div className="max-w-xl rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-500/20 dark:bg-red-500/10">
                     <div className="space-y-1 text-red-800 dark:text-red-400">
-                        <p className="font-medium text-sm">Warning</p>
+                        <p className="text-sm font-medium">Warning</p>
                         <p className="text-sm">
-                            Once your account is deleted, all of its resources and data will be permanently deleted. Please proceed with caution, this cannot be undone.
+                            Once your account is deleted, all of its resources
+                            and data will be permanently deleted. Please proceed
+                            with caution, this cannot be undone.
                         </p>
                     </div>
                 </div>
@@ -54,7 +63,8 @@ export default function DeleteUser() {
                             Are you sure you want to delete your account?
                         </DialogTitle>
                         <DialogDescription>
-                            Please enter your password to confirm you would like to permanently delete your account.
+                            Please enter your password to confirm you would like
+                            to permanently delete your account.
                         </DialogDescription>
 
                         <Form

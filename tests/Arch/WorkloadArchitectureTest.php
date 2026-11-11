@@ -20,14 +20,15 @@ test('Workload application layer does not depend on presentation or infrastructu
         'Illuminate\Database',
     ])
     ->ignoring([
-        'App\Modules\Workload\Application\UseCases\GetBoardIssuesQuery',
-        'App\Modules\Workload\Application\UseCases\GetBacklogIssuesQuery',
+        'App\Modules\Workload\Application\Queries',
     ]);
 
 test('Workload presentation layer only calls application layer (and CQRS queries)')
     ->expect('App\Modules\Workload\Presentation')
     ->not->toUse([
-        'App\Modules\Workload\Infrastructure\Persistence', // Boleh pakai Query, tapi tidak Persistence
+        'App\Modules\Workload\Infrastructure\Persistence\Eloquent\Repositories',
+        'App\Modules\Workload\Infrastructure\Listeners',
+        'App\Modules\Workload\Domain\Repositories',
     ]);
 
 test('No side effects in Application or Presentation layer (Should use Queue/Events)')

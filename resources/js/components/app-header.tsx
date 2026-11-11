@@ -115,8 +115,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                         </div>
 
                                         <div className="flex flex-col space-y-4">
-                                            {rightNavItems.map((item) => (
-                                                typeof item.href === 'string' && item.href.startsWith("http") ? (
+                                            {rightNavItems.map((item) =>
+                                                typeof item.href === 'string' &&
+                                                item.href.startsWith('http') ? (
                                                     <a
                                                         key={item.title}
                                                         href={toUrl(item.href)}
@@ -127,7 +128,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                         {item.icon && (
                                                             <item.icon className="h-5 w-5" />
                                                         )}
-                                                        <span>{item.title}</span>
+                                                        <span>
+                                                            {item.title}
+                                                        </span>
                                                     </a>
                                                 ) : (
                                                     <Link
@@ -138,10 +141,12 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                         {item.icon && (
                                                             <item.icon className="h-5 w-5" />
                                                         )}
-                                                        <span>{item.title}</span>
+                                                        <span>
+                                                            {item.title}
+                                                        </span>
                                                     </Link>
-                                                )
-                                            ))}
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -208,7 +213,9 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     >
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                {typeof item.href === 'string' && item.href.startsWith("http") ? (
+                                                {typeof item.href ===
+                                                    'string' &&
+                                                item.href.startsWith('http') ? (
                                                     <a
                                                         href={item.href}
                                                         target="_blank"
@@ -265,7 +272,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 <UserMenuContent user={auth.user} />
                             </DropdownMenuContent>
                         </DropdownMenu>
-
                     </div>
                 </div>
             </div>

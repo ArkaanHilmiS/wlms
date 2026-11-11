@@ -1,21 +1,28 @@
 import React from 'react';
 import { OrgUnit } from '../../hooks/use-org-units';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Edit2, Trash2, PlusCircle, Building2 } from 'lucide-react';
+import {
+    ChevronDown,
+    ChevronRight,
+    Edit2,
+    Trash2,
+    PlusCircle,
+    Building2,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 interface OrgUnitTreeProps {
     units: OrgUnit[];
@@ -30,25 +37,32 @@ interface OrgUnitTreeNodeProps {
     onDelete: (unit: OrgUnit) => void;
 }
 
-function OrgUnitTreeNode({ unit, depth = 0, onEdit, onDelete }: OrgUnitTreeNodeProps) {
+function OrgUnitTreeNode({
+    unit,
+    depth = 0,
+    onEdit,
+    onDelete,
+}: OrgUnitTreeNodeProps) {
     const { t } = useTranslate();
     const [isExpanded, setIsExpanded] = React.useState(true);
     const hasChildren = unit.children && unit.children.length > 0;
 
     return (
         <div className="w-full">
-            <div 
+            <div
                 className={cn(
-                    "flex items-center justify-between py-2 px-2 hover:bg-muted/50 rounded-md group",
-                    depth === 0 ? "border-b border-border/50 pb-3 mb-1 mt-2" : ""
+                    'hover:bg-muted/50 group flex items-center justify-between rounded-md px-2 py-2',
+                    depth === 0
+                        ? 'border-border/50 mt-2 mb-1 border-b pb-3'
+                        : '',
                 )}
                 style={{ paddingLeft: `${depth * 1.5 + 0.5}rem` }}
             >
-                <div className="flex items-center space-x-2 flex-1">
-                    <button 
+                <div className="flex flex-1 items-center space-x-2">
+                    <button
                         className={cn(
-                            "p-1 rounded-sm hover:bg-muted shrink-0 text-muted-foreground",
-                            !hasChildren && "invisible"
+                            'hover:bg-muted text-muted-foreground shrink-0 rounded-sm p-1',
+                            !hasChildren && 'invisible',
                         )}
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
@@ -58,22 +72,45 @@ function OrgUnitTreeNode({ unit, depth = 0, onEdit, onDelete }: OrgUnitTreeNodeP
                             <ChevronRight className="h-4 w-4" />
                         )}
                     </button>
-                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Building2 className="text-muted-foreground h-4 w-4 shrink-0" />
                     <span className="font-medium">{unit.name}</span>
-                    <span className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                    <span className="text-muted-foreground bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
                         {unit.code}
                     </span>
                     {!unit.is_active && (
-                        <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{t('Inactive')}</Badge>
+                        <Badge
+                            variant="secondary"
+                            className="h-5 px-1.5 text-[10px]"
+                        >
+                            {t('Inactive')}
+                        </Badge>
                     )}
                     {unit.level && (
-                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal">
+                        <Badge
+                            variant="outline"
+                            className="h-5 px-1.5 text-[10px] font-normal"
+                        >
                             {unit.level.name}
                         </Badge>
                     )}
+                    {unit.max_workspaces !== undefined && unit.max_workspaces > 0 ? (
+                        <Badge
+                            variant="secondary"
+                            className="h-5 px-1.5 text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium"
+                        >
+                            {unit.max_workspaces} {t('Workspace')}
+                        </Badge>
+                    ) : (
+                        <Badge
+                            variant="outline"
+                            className="h-5 px-1.5 text-[10px] text-muted-foreground border-dashed font-normal"
+                        >
+                            0 {t('Workspace')}
+                        </Badge>
+                    )}
                 </div>
-                
-                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                <div className="flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -88,7 +125,7 @@ function OrgUnitTreeNode({ unit, depth = 0, onEdit, onDelete }: OrgUnitTreeNodeP
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                className="text-destructive hover:text-destructive h-7 w-7"
                                 title={t('Delete Unit')}
                             >
                                 <Trash2 className="h-3 w-3" />
@@ -96,31 +133,39 @@ function OrgUnitTreeNode({ unit, depth = 0, onEdit, onDelete }: OrgUnitTreeNodeP
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                    {t('Are you absolutely sure?')}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the unit "{unit.name}".
+                                    This action cannot be undone. This will
+                                    permanently delete the unit "{unit.name}".
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => onDelete(unit)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                <AlertDialogCancel>
+                                    {t('Cancel')}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={() => onDelete(unit)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
                                     {t('Delete')}
-                                                                    </AlertDialogAction>
+                                </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                 </div>
             </div>
-            
+
             {hasChildren && isExpanded && (
                 <div className="flex flex-col">
                     {unit.children!.map((child) => (
-                        <OrgUnitTreeNode 
-                            key={child.id} 
-                            unit={child} 
-                            depth={depth + 1} 
-                            onEdit={onEdit} 
-                            onDelete={onDelete} 
+                        <OrgUnitTreeNode
+                            key={child.id}
+                            unit={child}
+                            depth={depth + 1}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
                         />
                     ))}
                 </div>
@@ -133,7 +178,7 @@ export function OrgUnitTree({ units, onEdit, onDelete }: OrgUnitTreeProps) {
     const { t } = useTranslate();
     if (!units.length) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 text-muted-foreground space-y-2 border rounded-md">
+            <div className="text-muted-foreground flex flex-col items-center justify-center space-y-2 rounded-md border p-12">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -144,33 +189,37 @@ export function OrgUnitTree({ units, onEdit, onDelete }: OrgUnitTreeProps) {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-8 w-8 text-muted-foreground/50"
+                    className="text-muted-foreground/50 h-8 w-8"
                 >
                     <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                     <rect width="20" height="14" x="2" y="6" rx="2" />
                 </svg>
-                <span className="text-sm font-medium">{t('No organization units found. Create one to get started.')}</span>
+                <span className="text-sm font-medium">
+                    {t(
+                        'No organization units found. Create one to get started.',
+                    )}
+                </span>
             </div>
         );
     }
 
     // Filter top-level units (those without parent_id or where parent doesn't exist in current array)
     const topLevelUnits = units.filter(
-        unit => !unit.parent_id || !units.find(u => u.id === unit.parent_id)
+        (unit) =>
+            !unit.parent_id || !units.find((u) => u.id === unit.parent_id),
     );
 
     return (
         <div className="w-full">
             {topLevelUnits.map((unit) => (
-                <OrgUnitTreeNode 
-                    key={unit.id} 
-                    unit={unit} 
-                    depth={0} 
-                    onEdit={onEdit} 
-                    onDelete={onDelete} 
+                <OrgUnitTreeNode
+                    key={unit.id}
+                    unit={unit}
+                    depth={0}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
                 />
             ))}
         </div>
     );
 }
-

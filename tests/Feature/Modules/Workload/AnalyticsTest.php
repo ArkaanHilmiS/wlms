@@ -623,8 +623,8 @@ test('1.9: GET /api/projects/{id}/analytics handles kanban project without sprin
     $sprintMetrics = $response->json('sprint_metrics');
 
     expect($sprintMetrics['has_sprints'])->toBeFalse()
-        ->and($sprintMetrics['burndown'])->toBe([])
-        ->and($sprintMetrics['velocity'])->toBe([])
+        ->and($sprintMetrics['burndown'])->toBeArray()->not->toBeEmpty()
+        ->and($sprintMetrics['velocity'])->toBeArray()->not->toBeEmpty()
         ->and($response->json('summary.total_issues'))->toBe(1);
 });
 

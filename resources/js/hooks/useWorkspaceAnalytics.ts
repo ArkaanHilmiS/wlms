@@ -73,7 +73,7 @@ export function useWorkspaceAnalytics({
             if (to) params.append('to', to);
 
             const response = await axios.get<WorkspaceAnalyticsResponse>(
-                `/api/workspaces/${workspaceId}/analytics?${params.toString()}`
+                `/api/workspaces/${workspaceId}/analytics?${params.toString()}`,
             );
             return response.data;
         },
@@ -81,4 +81,3 @@ export function useWorkspaceAnalytics({
         staleTime: 60 * 1000,
     });
 }
-

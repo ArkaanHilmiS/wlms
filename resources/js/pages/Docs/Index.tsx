@@ -1,24 +1,34 @@
 import { useEffect } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown, ArrowLeft, ArrowRight, Book, List, LifeBuoy, ArrowUpRight } from 'lucide-react';
+import {
+    ThumbsUp,
+    ThumbsDown,
+    ArrowLeft,
+    ArrowRight,
+    Book,
+    List,
+    LifeBuoy,
+    ArrowUpRight,
+    Edit3,
+} from 'lucide-react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
 interface DocsProps {
     page?: {
-        id: number;
+        id: number | string;
         title: string;
         slug: string;
         content: Record<string, unknown> | string | null;
         updated_at: string;
     } | null;
     menu: {
-        id: number;
+        id: number | string;
         name: string;
         pages: {
-            id: number;
+            id: number | string;
             title: string;
             slug: string;
         }[];
@@ -26,6 +36,15 @@ interface DocsProps {
 }
 
 export default function DocsIndex({ page, menu }: DocsProps) {
+    const { auth } = usePage().props as unknown as {
+        auth?: { user?: { permissions?: string[]; roles?: string[] } };
+    };
+    const isSuperAdmin =
+        auth?.user?.permissions?.includes('*') ||
+        auth?.user?.roles?.some(
+            (r: string) => r.toLowerCase() === 'superadmin',
+        );
+
     const safeContent = page?.content ?? '';
 
     const editor = useEditor({
@@ -45,10 +64,15 @@ export default function DocsIndex({ page, menu }: DocsProps) {
             <>
                 <Head title="Documentation" />
                 <div className="bg-background min-h-full">
-                    <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 lg:py-12">
-                        <div className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-sm mb-8 text-center">
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">Belum Ada Dokumentasi</h1>
-                            <p className="text-muted-foreground">Saat ini belum ada halaman dokumentasi yang tersedia.</p>
+                    <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-8 lg:py-12">
+                        <div className="bg-card border-border mb-8 rounded-2xl border p-8 text-center shadow-sm md:p-10">
+                            <h1 className="text-foreground mb-4 text-2xl font-bold tracking-tight md:text-3xl">
+                                Belum Ada Dokumentasi
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Saat ini belum ada halaman dokumentasi yang
+                                tersedia.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -93,48 +117,100 @@ export default function DocsIndex({ page, menu }: DocsProps) {
             `}</style>
 
             <div className="bg-background min-h-full">
-                <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-8 lg:py-12">
-                    
+                <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-8 lg:py-12">
                     {/* Global Header in a Card */}
-                    <div className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-sm mb-8">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-3 mb-6">
+                    <div className="bg-card border-border mb-8 rounded-2xl border p-8 shadow-sm md:p-10">
+                        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-3">
                             <div className="flex gap-2">
-                                <span className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold bg-muted text-muted-foreground">WLMS Docs</span>
-                                <span className="inline-flex items-center rounded-full border border-blue-200 px-2.5 py-0.5 text-xs font-semibold bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">Standard Operating Procedure</span>
+                                <span className="border-border bg-muted text-muted-foreground inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+                                    WorkPulse Docs
+                                </span>
+                                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                    Standard Operating Procedure
+                                </span>
                             </div>
-                            <span className="text-sm text-muted-foreground sm:ml-auto flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Diperbarui: {new Date(page.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
+                                <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>{' '}
+                                    Diperbarui:{' '}
+                                    {new Date(
+                                        page.updated_at,
+                                    ).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'long',
+                                        year: 'numeric',
+                                    })}
+                                </span>
+                                {isSuperAdmin && (
+                                    <div className="flex items-center gap-2">
+                                        <Link
+                                            href={`/admin/docs/${page.id}/edit`}
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 gap-1.5 text-xs"
+                                            >
+                                                <Edit3 className="h-3.5 w-3.5" />{' '}
+                                                Edit Dokumen
+                                            </Button>
+                                        </Link>
+                                        <Link href="/admin/docs">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-muted-foreground h-7 text-xs"
+                                            >
+                                                CMS
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <h1 className="text-3xl md:text-4xl lg:text-[40px] font-bold tracking-tight text-foreground mb-4 leading-tight">{page.title}</h1>
-                        <p className="text-muted-foreground text-lg max-w-4xl">Dokumen ini adalah panduan standar untuk seluruh anggota tim, Project Manager (PM), dan Developer dalam menggunakan sistem WLMS (Workload Management System).</p>
-                        <p className="text-muted-foreground text-lg max-w-4xl mt-2">Tujuan utama dari pedoman ini adalah agar skala pekerjaan bisa diprioritaskan dengan tepat, laporan dapat diukur dengan jelas, dan tidak ada pekerjaan yang saling tumpang tindih.</p>
+                        <h1 className="text-foreground mb-4 text-3xl leading-tight font-bold tracking-tight md:text-4xl lg:text-[40px]">
+                            {page.title}
+                        </h1>
+                        <p className="text-muted-foreground max-w-4xl text-lg">
+                            Dokumen ini adalah panduan standar untuk seluruh
+                            anggota tim, Project Manager (PM), dan Developer
+                            dalam menggunakan sistem WorkPulse (Workload Management
+                            System).
+                        </p>
+                        <p className="text-muted-foreground mt-2 max-w-4xl text-lg">
+                            Tujuan utama dari pedoman ini adalah agar skala
+                            pekerjaan bisa diprioritaskan dengan tepat, laporan
+                            dapat diukur dengan jelas, dan tidak ada pekerjaan
+                            yang saling tumpang tindih.
+                        </p>
                     </div>
 
                     {/* 2-Column Portal Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                        
+                    <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-12">
                         {/* Inner Left Sidebar */}
-                        <div className="hidden md:flex flex-col col-span-4 lg:col-span-3 space-y-6 sticky top-8">
-                            
+                        <div className="sticky top-8 col-span-4 hidden flex-col space-y-6 md:flex lg:col-span-3">
                             {/* Buku Panduan Block */}
-                            <div className="border border-border rounded-xl p-5 bg-card/50">
-                                <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm uppercase tracking-wider text-foreground">
-                                    <Book className="w-4 h-4 text-muted-foreground" /> Buku Panduan WLMS
+                            <div className="border-border bg-card/50 rounded-xl border p-5">
+                                <h3 className="text-foreground mb-4 flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
+                                    <Book className="text-muted-foreground h-4 w-4" />{' '}
+                                    Buku Panduan WorkPulse
                                 </h3>
                                 <div className="space-y-1">
                                     {menu.map((category) => (
                                         <div key={category.id}>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-2 mt-4 px-2">{category.name}</div>
+                                            <div className="text-muted-foreground mt-4 mb-2 px-2 text-xs font-semibold">
+                                                {category.name}
+                                            </div>
                                             {category.pages.map((p) => {
-                                                const isActive = p.slug === page.slug;
+                                                const isActive =
+                                                    p.slug === page.slug;
                                                 return (
                                                     <Link
                                                         key={p.id}
                                                         href={`/docs/${p.slug}`}
-                                                        className={`block px-2 py-1.5 text-sm rounded-md transition-colors ${
-                                                            isActive 
-                                                                ? 'font-medium text-foreground bg-muted/50 border-l-2 border-primary' 
+                                                        className={`block rounded-md px-2 py-1.5 text-sm transition-colors ${
+                                                            isActive
+                                                                ? 'text-foreground bg-muted/50 border-primary border-l-2 font-medium'
                                                                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                                         }`}
                                                     >
@@ -148,67 +224,128 @@ export default function DocsIndex({ page, menu }: DocsProps) {
                             </div>
 
                             {/* TOC Block */}
-                            <div className="border border-border rounded-xl p-5 bg-card/50">
-                                <h3 className="font-semibold flex items-center gap-2 mb-4 text-sm uppercase tracking-wider text-foreground">
-                                    <List className="w-4 h-4 text-muted-foreground" /> Daftar Isi Halaman
+                            <div className="border-border bg-card/50 rounded-xl border p-5">
+                                <h3 className="text-foreground mb-4 flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
+                                    <List className="text-muted-foreground h-4 w-4" />{' '}
+                                    Daftar Isi Halaman
                                 </h3>
                                 <div className="space-y-2">
-                                    <a href="#" className="block text-sm text-foreground hover:text-primary transition-colors">1. Tipe Tiket & Hirarki</a>
-                                    <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">2. Skala Prioritas & SLA</a>
-                                    <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">3. Skenario Modul Keranjang</a>
-                                    <a href="#" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">4. Rangkuman Siklus Kerja</a>
+                                    <a
+                                        href="#"
+                                        className="text-foreground hover:text-primary block text-sm transition-colors"
+                                    >
+                                        1. Tipe Tiket & Hirarki
+                                    </a>
+                                    <a
+                                        href="#"
+                                        className="text-muted-foreground hover:text-foreground block text-sm transition-colors"
+                                    >
+                                        2. Skala Prioritas & SLA
+                                    </a>
+                                    <a
+                                        href="#"
+                                        className="text-muted-foreground hover:text-foreground block text-sm transition-colors"
+                                    >
+                                        3. Skenario Modul Keranjang
+                                    </a>
+                                    <a
+                                        href="#"
+                                        className="text-muted-foreground hover:text-foreground block text-sm transition-colors"
+                                    >
+                                        4. Rangkuman Siklus Kerja
+                                    </a>
                                 </div>
                             </div>
 
                             {/* Support Card */}
-                            <div className="border border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-900/10 rounded-xl p-5">
-                                <h3 className="font-semibold text-blue-900 dark:text-blue-400 flex items-center gap-2 mb-2 text-sm">
-                                    <LifeBuoy className="w-4 h-4" /> Butuh Bantuan Tim?
+                            <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5 dark:border-blue-900/50 dark:bg-blue-900/10">
+                                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-900 dark:text-blue-400">
+                                    <LifeBuoy className="h-4 w-4" /> Butuh
+                                    Bantuan Tim?
                                 </h3>
-                                <p className="text-xs text-blue-700/80 dark:text-blue-300/80 mb-3">Jika Anda menemukan masalah sistem yang tidak tercantum, hubungi Tim IT Anda.</p>
-                                <Button variant="outline" size="sm" className="w-full text-blue-700 border-blue-200 hover:bg-blue-100 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900">
-                                    Buka Tiket Bantuan <ArrowUpRight className="w-3 h-3 ml-1" />
+                                <p className="mb-3 text-xs text-blue-700/80 dark:text-blue-300/80">
+                                    Jika Anda menemukan masalah sistem yang
+                                    tidak tercantum, hubungi Tim IT Anda.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900"
+                                >
+                                    Buka Tiket Bantuan{' '}
+                                    <ArrowUpRight className="ml-1 h-3 w-3" />
                                 </Button>
                             </div>
                         </div>
-                        
+
                         {/* Main Reading Canvas */}
                         <div className="col-span-1 md:col-span-8 lg:col-span-9">
-                            <div className="bg-card border border-border/80 rounded-2xl p-6 md:p-10 shadow-sm relative">
-                                                                                                                                <div className="markdown-body max-w-none"><EditorContent editor={editor} /></div>
+                            <div className="bg-card border-border/80 relative rounded-2xl border p-6 shadow-sm md:p-10">
+                                <div className="markdown-body max-w-none">
+                                    <EditorContent editor={editor} />
+                                </div>
 
-                                <hr className="my-10 border-border" />
+                                <hr className="border-border my-10" />
 
                                 {/* Feedback Widget */}
-                                <div className="flex flex-col sm:flex-row items-center justify-between bg-muted/20 border border-border rounded-xl p-6 mb-8 gap-4">
-                                    <div className="text-sm font-medium text-foreground">
-                                        Apakah dokumentasi panduan ini membantu Anda?
-                                        <p className="text-xs text-muted-foreground mt-1 font-normal">Bantu kami meningkatkan kualitas dokumentasi operasional WLMS.</p>
+                                <div className="bg-muted/20 border-border mb-8 flex flex-col items-center justify-between gap-4 rounded-xl border p-6 sm:flex-row">
+                                    <div className="text-foreground text-sm font-medium">
+                                        Apakah dokumentasi panduan ini membantu
+                                        Anda?
+                                        <p className="text-muted-foreground mt-1 text-xs font-normal">
+                                            Bantu kami meningkatkan kualitas
+                                            dokumentasi operasional WorkPulse.
+                                        </p>
                                     </div>
-                                    <div className="flex gap-2 w-full sm:w-auto">
-                                        <Button variant="outline" size="sm" className="w-full sm:w-auto bg-background">
-                                            <ThumbsUp className="w-4 h-4 mr-2" /> Ya, sangat jelas
+                                    <div className="flex w-full gap-2 sm:w-auto">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-background w-full sm:w-auto"
+                                        >
+                                            <ThumbsUp className="mr-2 h-4 w-4" />{' '}
+                                            Ya, sangat jelas
                                         </Button>
-                                        <Button variant="outline" size="sm" className="w-full sm:w-auto bg-background">
-                                            <ThumbsDown className="w-4 h-4 mr-2" /> Kurang lengkap
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-background w-full sm:w-auto"
+                                        >
+                                            <ThumbsDown className="mr-2 h-4 w-4" />{' '}
+                                            Kurang lengkap
                                         </Button>
                                     </div>
                                 </div>
 
                                 {/* Pagination */}
-                                <div className="flex justify-between items-center text-sm pt-4 border-t border-border/50">
-                                    <a href="#" className="flex flex-col text-muted-foreground hover:text-foreground transition-colors group">
-                                        <span className="text-xs mb-1 group-hover:text-foreground">Sebelumnya</span>
-                                        <span className="font-medium flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Konfigurasi Akun</span>
+                                <div className="border-border/50 flex items-center justify-between border-t pt-4 text-sm">
+                                    <a
+                                        href="#"
+                                        className="text-muted-foreground hover:text-foreground group flex flex-col transition-colors"
+                                    >
+                                        <span className="group-hover:text-foreground mb-1 text-xs">
+                                            Sebelumnya
+                                        </span>
+                                        <span className="flex items-center gap-1 font-medium">
+                                            <ArrowLeft className="h-4 w-4" />{' '}
+                                            Konfigurasi Akun
+                                        </span>
                                     </a>
-                                    <a href="#" className="flex flex-col items-end text-muted-foreground hover:text-foreground transition-colors group">
-                                        <span className="text-xs mb-1 group-hover:text-foreground">Selanjutnya</span>
-                                        <span className="font-medium flex items-center gap-1">Alur Sprint & Backlog <ArrowRight className="w-4 h-4" /></span>
+                                    <a
+                                        href="#"
+                                        className="text-muted-foreground hover:text-foreground group flex flex-col items-end transition-colors"
+                                    >
+                                        <span className="group-hover:text-foreground mb-1 text-xs">
+                                            Selanjutnya
+                                        </span>
+                                        <span className="flex items-center gap-1 font-medium">
+                                            Alur Sprint & Backlog{' '}
+                                            <ArrowRight className="h-4 w-4" />
+                                        </span>
                                     </a>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -223,3 +360,14 @@ DocsIndex.layout = (page: React.ReactNode) => {
         </AppLayout>
     );
 };
+
+
+// Username : quinton.jaury@mii.co.id
+// Username : Mochammad.Suhendar@mii.co.id
+// Username : danu.febriansyah@mii.co.id
+// Username : Abu.Mucholladin@mii.co.id
+// Username : fabiansyah.pradipta@mii.co.id
+// Username : bayu.pratama@mii.co.id
+// Username : abiela.susilo@mii.co.id
+// Username : Tri.Marsetia@mii.co.id
+// Username : nashrullah.nashrull@mii.co.id

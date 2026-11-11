@@ -11,8 +11,15 @@ import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { useTranslate } from "@/hooks/useTranslate";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+    CardFooter,
+} from '@/components/ui/card';
+import { useTranslate } from '@/hooks/useTranslate';
 
 // oxfmt-ignore
 type Props = {
@@ -35,8 +42,10 @@ export default function Security(props: Props) {
                     <CardHeader>
                         <CardTitle>{t('Update Password')}</CardTitle>
                         <CardDescription>
-                            {t('Ensure your account is using a long, random password to stay secure.')}
-                                                    </CardDescription>
+                            {t(
+                                'Ensure your account is using a long, random password to stay secure.',
+                            )}
+                        </CardDescription>
                     </CardHeader>
 
                     <Form
@@ -62,11 +71,11 @@ export default function Security(props: Props) {
                     >
                         {({ errors, processing }) => (
                             <>
-                                <CardContent className="space-y-6 max-w-xl">
+                                <CardContent className="max-w-xl space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="current_password">
                                             {t('Current password')}
-                                                                                    </Label>
+                                        </Label>
                                         <PasswordInput
                                             id="current_password"
                                             ref={currentPasswordInput}
@@ -75,11 +84,15 @@ export default function Security(props: Props) {
                                             autoComplete="current-password"
                                             placeholder={t('Current password')}
                                         />
-                                        <InputError message={errors.current_password} />
+                                        <InputError
+                                            message={errors.current_password}
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="password">{t('New password')}</Label>
+                                        <Label htmlFor="password">
+                                            {t('New password')}
+                                        </Label>
                                         <PasswordInput
                                             id="password"
                                             ref={passwordInput}
@@ -95,7 +108,7 @@ export default function Security(props: Props) {
                                     <div className="space-y-2">
                                         <Label htmlFor="password_confirmation">
                                             {t('Confirm password')}
-                                                                                    </Label>
+                                        </Label>
                                         <PasswordInput
                                             id="password_confirmation"
                                             name="password_confirmation"
@@ -104,17 +117,20 @@ export default function Security(props: Props) {
                                             placeholder={t('Confirm password')}
                                             passwordrules={props.passwordRules}
                                         />
-                                        <InputError message={errors.password_confirmation} />
+                                        <InputError
+                                            message={
+                                                errors.password_confirmation
+                                            }
+                                        />
                                     </div>
                                 </CardContent>
                                 <CardFooter className="justify-end">
                                     <Button
                                         disabled={processing}
                                         data-test="update-password-button"
-                                        
                                     >
                                         {t('Save Password')}
-                                                                            </Button>
+                                    </Button>
                                 </CardFooter>
                             </>
                         )}

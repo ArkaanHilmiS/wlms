@@ -67,13 +67,13 @@ final class CreateProjectUseCase
             }
         }
 
-        // 3. Workspace Admin check
+        // 3. Workspace Member / Admin check
         $isWorkspaceAdmin = false;
         if (! $isSuperAdmin && ! $isInternalMember) {
             $isWorkspaceAdmin = DB::table('workspace_members')
                 ->where('workspace_id', $workspaceId)
                 ->where('user_id', $userId)
-                ->where('role', 'admin')
+                ->where('role', '!=', 'viewer')
                 ->exists();
         }
 

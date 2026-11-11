@@ -8,7 +8,7 @@ final class AssignIssueInput
 {
     public function __construct(
         public readonly string $issueId,
-        public readonly string $assigneeId,
+        public readonly ?string $assigneeId,
         public readonly string $actorUserId
     ) {}
 }

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     const { t } = useTranslate();
@@ -27,7 +27,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">{t('Email address')}</Label>
+                                <Label htmlFor="email">
+                                    {t('Email address')}
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -50,7 +52,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                         <LoaderCircle className="h-4 w-4 animate-spin" />
                                     )}
                                     {t('Email password reset link')}
-                                                                    </Button>
+                                </Button>
                             </div>
                         </>
                     )}

@@ -9,13 +9,17 @@ export type OrgUnit = {
     name: string;
     code: string;
     is_active: boolean;
+    max_workspaces?: number;
     level?: OrgLevel;
     children?: OrgUnit[];
     created_at?: string;
     updated_at?: string;
 };
 
-type CreateOrgUnitPayload = Omit<OrgUnit, 'id' | 'level' | 'children' | 'created_at' | 'updated_at'>;
+type CreateOrgUnitPayload = Omit<
+    OrgUnit,
+    'id' | 'level' | 'children' | 'created_at' | 'updated_at'
+>;
 type UpdateOrgUnitPayload = Partial<CreateOrgUnitPayload> & { id: string };
 
 export function useOrgUnits() {
@@ -66,4 +70,3 @@ export function useDeleteOrgUnit() {
         },
     });
 }
-

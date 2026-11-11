@@ -48,9 +48,14 @@ export function LeadTimeHistogram({
     const { t } = useTranslate();
     const { iconSize } = useIconSize();
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
+        x: 0,
+        y: 0,
+    });
 
-    const totalCount = data ? data.reduce((sum, d) => sum + (Number(d.count) || 0), 0) : 0;
+    const totalCount = data
+        ? data.reduce((sum, d) => sum + (Number(d.count) || 0), 0)
+        : 0;
 
     if (!data || data.length === 0 || totalCount === 0) {
         return (
@@ -67,7 +72,12 @@ export function LeadTimeHistogram({
         IconSize,
         {
             fontSize: string;
-            margin: { top: number; right: number; bottom: number; left: number };
+            margin: {
+                top: number;
+                right: number;
+                bottom: number;
+                left: number;
+            };
             maxBarWidth: number;
             summaryGap: string;
             summaryPadding: string;
@@ -113,7 +123,7 @@ export function LeadTimeHistogram({
 
     return (
         <div
-            className={cn('flex flex-col w-full', className)}
+            className={cn('flex w-full flex-col', className)}
             data-slot="lead-time-histogram"
         >
             {/* Summary Metrics Chips */}
@@ -123,15 +133,15 @@ export function LeadTimeHistogram({
                     p85Days !== undefined) && (
                     <div
                         className={cn(
-                            'grid grid-cols-3 w-full',
-                            config.summaryGap
+                            'grid w-full grid-cols-3',
+                            config.summaryGap,
                         )}
                     >
                         {averageDays !== undefined && (
                             <div
                                 className={cn(
-                                    'flex flex-col rounded-lg border border-border/70 bg-card text-card-foreground',
-                                    config.summaryPadding
+                                    'border-border/70 bg-card text-card-foreground flex flex-col rounded-lg border',
+                                    config.summaryPadding,
                                 )}
                             >
                                 <span className={config.summaryLabelSize}>
@@ -141,8 +151,8 @@ export function LeadTimeHistogram({
                                 </span>
                                 <span
                                     className={cn(
-                                        'tabular-nums text-foreground mt-0.5',
-                                        config.summaryValueSize
+                                        'text-foreground mt-0.5 tabular-nums',
+                                        config.summaryValueSize,
                                     )}
                                 >
                                     {formatDays(averageDays)}
@@ -153,8 +163,8 @@ export function LeadTimeHistogram({
                         {medianDays !== undefined && (
                             <div
                                 className={cn(
-                                    'flex flex-col rounded-lg border border-border/70 bg-card text-card-foreground',
-                                    config.summaryPadding
+                                    'border-border/70 bg-card text-card-foreground flex flex-col rounded-lg border',
+                                    config.summaryPadding,
                                 )}
                             >
                                 <span className={config.summaryLabelSize}>
@@ -162,8 +172,8 @@ export function LeadTimeHistogram({
                                 </span>
                                 <span
                                     className={cn(
-                                        'tabular-nums text-foreground mt-0.5',
-                                        config.summaryValueSize
+                                        'text-foreground mt-0.5 tabular-nums',
+                                        config.summaryValueSize,
                                     )}
                                 >
                                     {formatDays(medianDays)}
@@ -174,8 +184,8 @@ export function LeadTimeHistogram({
                         {p85Days !== undefined && (
                             <div
                                 className={cn(
-                                    'flex flex-col rounded-lg border border-border/70 bg-card text-card-foreground',
-                                    config.summaryPadding
+                                    'border-border/70 bg-card text-card-foreground flex flex-col rounded-lg border',
+                                    config.summaryPadding,
                                 )}
                             >
                                 <span className={config.summaryLabelSize}>
@@ -183,8 +193,8 @@ export function LeadTimeHistogram({
                                 </span>
                                 <span
                                     className={cn(
-                                        'tabular-nums text-foreground mt-0.5',
-                                        config.summaryValueSize
+                                        'text-foreground mt-0.5 tabular-nums',
+                                        config.summaryValueSize,
                                     )}
                                 >
                                     {formatDays(p85Days)}
@@ -203,16 +213,18 @@ export function LeadTimeHistogram({
                 {({ width, height: containerHeight }) => {
                     const plotWidth = Math.max(
                         0,
-                        width - config.margin.left - config.margin.right
+                        width - config.margin.left - config.margin.right,
                     );
                     const plotHeight = Math.max(
                         0,
-                        containerHeight - config.margin.top - config.margin.bottom
+                        containerHeight -
+                            config.margin.top -
+                            config.margin.bottom,
                     );
 
                     const maxCountRaw = Math.max(
                         ...data.map((d) => Number(d.count) || 0),
-                        0
+                        0,
                     );
 
                     const getNiceCeiling = (val: number) => {
@@ -222,20 +234,25 @@ export function LeadTimeHistogram({
                         if (val <= 20) return 20;
                         if (val <= 50) return 50;
                         if (val <= 100) return 100;
-                        const factor = Math.pow(10, Math.floor(Math.log10(val)));
+                        const factor = Math.pow(
+                            10,
+                            Math.floor(Math.log10(val)),
+                        );
                         return Math.ceil(val / factor) * factor;
                     };
 
                     const maxCount = getNiceCeiling(maxCountRaw);
                     const tickCount = 4;
-                    const yTicks = Array.from({ length: tickCount + 1 }, (_, i) =>
-                        Math.round((maxCount / tickCount) * i)
+                    const yTicks = Array.from(
+                        { length: tickCount + 1 },
+                        (_, i) => Math.round((maxCount / tickCount) * i),
                     );
 
-                    const slotWidth = data.length > 0 ? plotWidth / data.length : 0;
+                    const slotWidth =
+                        data.length > 0 ? plotWidth / data.length : 0;
                     const barWidth = Math.max(
                         8,
-                        Math.min(slotWidth * 0.7, config.maxBarWidth)
+                        Math.min(slotWidth * 0.7, config.maxBarWidth),
                     );
 
                     const activeItem =
@@ -255,7 +272,7 @@ export function LeadTimeHistogram({
 
                     return (
                         <div
-                            className="relative w-full h-full"
+                            className="relative h-full w-full"
                             onMouseLeave={() => setHoveredIndex(null)}
                         >
                             <svg
@@ -276,14 +293,21 @@ export function LeadTimeHistogram({
                                                 <line
                                                     x1={config.margin.left}
                                                     y1={yPos}
-                                                    x2={config.margin.left + plotWidth}
+                                                    x2={
+                                                        config.margin.left +
+                                                        plotWidth
+                                                    }
                                                     y2={yPos}
                                                     stroke="currentColor"
-                                                    strokeDasharray={i === 0 ? undefined : '3 3'}
+                                                    strokeDasharray={
+                                                        i === 0
+                                                            ? undefined
+                                                            : '3 3'
+                                                    }
                                                     className={cn(
                                                         i === 0
                                                             ? 'text-border stroke-[1.5]'
-                                                            : 'text-border/40 stroke-1'
+                                                            : 'text-border/40 stroke-1',
                                                     )}
                                                 />
                                                 <text
@@ -292,7 +316,10 @@ export function LeadTimeHistogram({
                                                     textAnchor="end"
                                                     fill="currentColor"
                                                     className="text-muted-foreground font-mono"
-                                                    style={{ fontSize: config.fontSize }}
+                                                    style={{
+                                                        fontSize:
+                                                            config.fontSize,
+                                                    }}
                                                 >
                                                     {tickVal}
                                                 </text>
@@ -312,13 +339,14 @@ export function LeadTimeHistogram({
                                         idx * slotWidth +
                                         (slotWidth - barWidth) / 2;
                                     const yPos =
-                                        config.margin.top + (plotHeight - barHeight);
+                                        config.margin.top +
+                                        (plotHeight - barHeight);
                                     const isHovered = hoveredIndex === idx;
 
                                     return (
                                         <g
                                             key={`hbucket-${idx}`}
-                                            className="transition-all duration-150 cursor-pointer"
+                                            className="cursor-pointer transition-all duration-150"
                                             onMouseEnter={() => {
                                                 setHoveredIndex(idx);
                                                 setMousePos({
@@ -336,7 +364,10 @@ export function LeadTimeHistogram({
                                             {/* Column hover background */}
                                             {isHovered && (
                                                 <rect
-                                                    x={config.margin.left + idx * slotWidth}
+                                                    x={
+                                                        config.margin.left +
+                                                        idx * slotWidth
+                                                    }
                                                     y={config.margin.top}
                                                     width={slotWidth}
                                                     height={plotHeight}
@@ -357,7 +388,7 @@ export function LeadTimeHistogram({
                                                     'transition-all duration-150',
                                                     isHovered
                                                         ? 'brightness-110 drop-shadow-xs'
-                                                        : 'opacity-90'
+                                                        : 'opacity-90',
                                                 )}
                                             />
 
@@ -368,7 +399,7 @@ export function LeadTimeHistogram({
                                                     y={yPos + 14}
                                                     textAnchor="middle"
                                                     fill="var(--color-card, #fff)"
-                                                    className="font-mono font-bold text-[10px]"
+                                                    className="font-mono text-[10px] font-bold"
                                                 >
                                                     {val}
                                                 </text>
@@ -377,16 +408,22 @@ export function LeadTimeHistogram({
                                             {/* Bucket Label */}
                                             <text
                                                 x={xPos + barWidth / 2}
-                                                y={config.margin.top + plotHeight + 16}
+                                                y={
+                                                    config.margin.top +
+                                                    plotHeight +
+                                                    16
+                                                }
                                                 textAnchor="middle"
                                                 fill="currentColor"
                                                 className={cn(
                                                     'font-medium transition-colors',
                                                     isHovered
                                                         ? 'text-foreground font-semibold'
-                                                        : 'text-muted-foreground'
+                                                        : 'text-muted-foreground',
                                                 )}
-                                                style={{ fontSize: config.fontSize }}
+                                                style={{
+                                                    fontSize: config.fontSize,
+                                                }}
                                             >
                                                 {item.bucket}
                                             </text>
@@ -401,7 +438,11 @@ export function LeadTimeHistogram({
                                     active={hoveredIndex !== null}
                                     x={mousePos.x}
                                     y={mousePos.y}
-                                    title={activeItem ? `${t('Duration')}: ${activeItem.bucket}` : undefined}
+                                    title={
+                                        activeItem
+                                            ? `${t('Duration')}: ${activeItem.bucket}`
+                                            : undefined
+                                    }
                                     items={tooltipItems}
                                     containerWidth={width}
                                     containerHeight={containerHeight}

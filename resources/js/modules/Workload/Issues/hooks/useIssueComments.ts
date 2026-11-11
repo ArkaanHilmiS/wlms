@@ -19,7 +19,11 @@ export const useIssueComments = (issueId: string | null) => {
     const queryKey = ['issues', issueId, 'comments'];
 
     // GET: Fetch all comments for an issue
-    const { data: comments = [], isLoading, error } = useQuery<IssueComment[]>({
+    const {
+        data: comments = [],
+        isLoading,
+        error,
+    } = useQuery<IssueComment[]>({
         queryKey,
         queryFn: async () => {
             const { data } = await axios.get(`/api/issues/${issueId}/comments`);
@@ -31,7 +35,10 @@ export const useIssueComments = (issueId: string | null) => {
     // POST: Add a new comment
     const addCommentMutation = useMutation({
         mutationFn: async (payload: { body: string }) => {
-            const { data } = await axios.post(`/api/issues/${issueId}/comments`, payload);
+            const { data } = await axios.post(
+                `/api/issues/${issueId}/comments`,
+                payload,
+            );
             return data.data ? data.data : data;
         },
         onSuccess: () => {
@@ -47,4 +54,3 @@ export const useIssueComments = (issueId: string | null) => {
         isAdding: addCommentMutation.isPending,
     };
 };
-

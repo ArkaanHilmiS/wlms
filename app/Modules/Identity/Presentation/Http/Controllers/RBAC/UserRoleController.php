@@ -15,14 +15,16 @@ class UserRoleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'role_id' => 'required|exists:roles,id',
-            'context_type' => 'nullable|string|in:workspace,project',
+            'context_type' => 'nullable|string|in:workspace,project,global,WORKSPACE,PROJECT,GLOBAL',
             'context_id' => 'nullable|string',
         ]);
 
+        $contextType = ! empty($validated['context_type']) ? strtoupper((string) $validated['context_type']) : null;
+
         $command->execute(
-            $validated['user_id'],
-            $validated['role_id'],
-            $validated['context_type'] ?? null,
+            (string) $validated['user_id'],
+            (string) $validated['role_id'],
+            $contextType,
             $validated['context_id'] ?? null
         );
 
@@ -34,12 +36,26 @@ class UserRoleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'role_id' => 'required|exists:roles,id',
+            'context_type' => 'nullable|string',
+            'context_id' => 'nullable|string',
         ]);
 
-        DB::table('user_roles')
+        $query = DB::table('user_roles')
             ->where('user_id', $validated['user_id'])
-            ->where('role_id', $validated['role_id'])
-            ->delete();
+            ->where('role_id', $validated['role_id']);
+
+        if (array_key_exists('context_type', $validated) && $validated['context_type'] !== null) {
+            $query->where('context_type', strtoupper((string) $validated['context_type']));
+            if (array_key_exists('context_id', $validated)) {
+                if ($validated['context_id'] === null || $validated['context_id'] === '') {
+                    $query->whereNull('context_id');
+                } else {
+                    $query->where('context_id', $validated['context_id']);
+                }
+            }
+        }
+
+        $query->delete();
 
         return response()->json(['message' => 'Role revoked successfully'], 204);
     }

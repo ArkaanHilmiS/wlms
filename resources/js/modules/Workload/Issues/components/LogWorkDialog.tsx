@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Issue } from '@/types/issue';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 export interface LogWorkPayload {
     time_spent_seconds: number;
@@ -40,11 +45,13 @@ export const LogWorkDialog: React.FC<LogWorkDialogProps> = ({
             setHours('');
             setMinutes('');
             setDescription('');
-            
+
             // Set default to current time in local ISO format (YYYY-MM-DDTHH:mm)
             const now = new Date();
             const offset = now.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
+            const localISOTime = new Date(now.getTime() - offset)
+                .toISOString()
+                .slice(0, 16);
             setStartedAt(localISOTime);
         }
     }, [isOpen]);
@@ -54,10 +61,12 @@ export const LogWorkDialog: React.FC<LogWorkDialogProps> = ({
 
         const h = parseInt(hours || '0', 10);
         const m = parseInt(minutes || '0', 10);
-        const time_spent_seconds = (h * 3600) + (m * 60);
+        const time_spent_seconds = h * 3600 + m * 60;
 
         if (time_spent_seconds <= 0) {
-            toast.error(t('Validation Error'), { description: 'Time spent must be greater than 0' });
+            toast.error(t('Validation Error'), {
+                description: 'Time spent must be greater than 0',
+            });
             return;
         }
 
@@ -71,17 +80,22 @@ export const LogWorkDialog: React.FC<LogWorkDialogProps> = ({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => {
-            if (!open) onClose();
-        }}>
-            <DialogContent 
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => {
+                if (!open) onClose();
+            }}
+        >
+            <DialogContent
                 className="sm:max-w-[425px]"
                 onInteractOutside={(e) => {
                     e.preventDefault();
                 }}
             >
                 <DialogHeader>
-                    <DialogTitle>{t('Log Work -')} {issue?.title}</DialogTitle>
+                    <DialogTitle>
+                        {t('Log Work -')} {issue?.title}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -123,7 +137,9 @@ export const LogWorkDialog: React.FC<LogWorkDialogProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="workDescription">{t('Description')}</Label>
+                        <Label htmlFor="workDescription">
+                            {t('Description')}
+                        </Label>
                         <Textarea
                             id="workDescription"
                             value={description}
@@ -135,9 +151,14 @@ export const LogWorkDialog: React.FC<LogWorkDialogProps> = ({
                     </div>
 
                     <div className="flex justify-end space-x-2 pt-4">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={isLoading}
+                        >
                             {t('Cancel')}
-                                                    </Button>
+                        </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? 'Saving...' : 'Save Worklog'}
                         </Button>

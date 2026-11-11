@@ -3,7 +3,7 @@ import { Shield, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { RoleList } from './RoleList';
 import { RoleCreateDialog } from './RoleCreateDialog';
-import { useTranslate } from "@/hooks/useTranslate";
+import { useTranslate } from '@/hooks/useTranslate';
 
 // Ini adalah Smart Component
 // Tugasnya murni menghandle Server State (React Query) dan interaksi API.
@@ -17,12 +17,15 @@ export function RoleManager() {
     if (isLoading) {
         return (
             <div className="flex justify-center p-8">
-                <Loader2 className="animate-spin text-muted-foreground w-8 h-8" />
+                <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
             </div>
         );
     }
 
-    const handleCreate = async (payload: { name: string; scope: 'GLOBAL' | 'WORKSPACE' | 'PROJECT' }) => {
+    const handleCreate = async (payload: {
+        name: string;
+        scope: 'GLOBAL' | 'WORKSPACE' | 'PROJECT';
+    }) => {
         try {
             await createRole.mutateAsync(payload);
             toast.success(t('Role created successfully'));
@@ -43,10 +46,7 @@ export function RoleManager() {
 
     return (
         <div className="space-y-4">
-            <RoleList 
-                roles={roles || []} 
-                onDelete={handleDelete} 
-            />
+            <RoleList roles={roles || []} onDelete={handleDelete} />
         </div>
     );
 }

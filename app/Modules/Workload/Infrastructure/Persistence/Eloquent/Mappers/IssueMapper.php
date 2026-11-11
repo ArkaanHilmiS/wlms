@@ -42,6 +42,9 @@ final class IssueMapper
         $set('originalEstimateSeconds', $model->original_estimate_seconds ? (int) $model->original_estimate_seconds : null);
         $set('remainingEstimateSeconds', $model->remaining_estimate_seconds !== null ? (int) $model->remaining_estimate_seconds : null);
         $set('createdAt', new DateTimeImmutable($model->created_at->toDateTimeString()));
+        $set('startDate', $model->start_date?->format('Y-m-d'));
+        $set('dueDate', $model->due_date?->format('Y-m-d'));
+        $set('parentId', $model->parent_id);
 
         return $issue;
     }
@@ -56,6 +59,7 @@ final class IssueMapper
             'project_id' => $issue->getProjectId()->value,
             'sprint_id' => $issue->getSprintId()?->value,
             'status_id' => $issue->getStatusId()->value,
+            'parent_id' => $issue->getParentId(),
             'number' => $issue->getNumber()->getValue(),
             'title' => $issue->getTitle(),
             'description' => $issue->getDescription(),
@@ -66,6 +70,8 @@ final class IssueMapper
             'remaining_estimate_seconds' => $issue->getRemainingEstimateSeconds(),
             'reporter_id' => $issue->getReporterId(),
             'assignee_id' => $issue->getAssigneeId()?->value,
+            'start_date' => $issue->getStartDate(),
+            'due_date' => $issue->getDueDate(),
         ];
     }
 }

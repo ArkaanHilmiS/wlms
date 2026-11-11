@@ -23,7 +23,7 @@ final class IssueLinkModel extends Model
         'id',
         'source_issue_id',
         'target_issue_id',
-        'link_type',
+        'link_type_id',
         'created_by',
     ];
 

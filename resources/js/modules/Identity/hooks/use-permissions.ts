@@ -20,7 +20,13 @@ export function usePermissions() {
 export function useSyncRolePermissions() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
+        mutationFn: async ({
+            roleId,
+            permissionIds,
+        }: {
+            roleId: string;
+            permissionIds: string[];
+        }) => {
             await axios.post(`/api/rbac/roles/${roleId}/permissions`, {
                 permission_ids: permissionIds,
             });
@@ -30,4 +36,3 @@ export function useSyncRolePermissions() {
         },
     });
 }
-
