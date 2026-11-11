@@ -27,6 +27,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+desktop.ini
+Screenshot *.png
 
 # Temporary Agent Scripts
 .scratch/
